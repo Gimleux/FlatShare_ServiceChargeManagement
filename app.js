@@ -54,7 +54,8 @@ function handleCalculateButtonClick() {
   resultDiv.innerHTML = '';
   listOfRegisteredBilling.forEach(bill => {
     const div = document.createElement('div');
-    div.innerHTML = `<h3>${bill.category}</h3>`;
+    div.className = 'dynamic-container';
+    div.innerHTML = `<h3 class="dynamic-heading">${bill.category}</h3>`;
     calculateAndDisplayBilling(bill, div);
     resultDiv.appendChild(div);
   });
@@ -82,7 +83,7 @@ function updateList(element, items, formatter) {
 }
 
 function updateTenantList() {
-  updateList(tenantList, listOfRegisteredTenants, (tenant, index) => `<li>${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut}) <button onclick="deleteTenant(${index})">Delete</button></li>`);
+  updateList(tenantList, listOfRegisteredTenants, (tenant, index) => `<li>${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut}) <button class="dynamic-btn" onclick="deleteTenant(${index})">Delete</button></li>`);
 }
 
 function updateAdditionalCostList() {
@@ -90,28 +91,29 @@ function updateAdditionalCostList() {
   Object.keys(listOfRegisteredAdditionalCosts).forEach((category, index) => {
     const costs = listOfRegisteredAdditionalCosts[category];
     const categoryDiv = document.createElement('div');
-    categoryDiv.innerHTML = `<strong>${category}</strong> <button onclick="deleteAdditionalCost('${category}')">Delete Category</button>`;
+    categoryDiv.className = 'dynamic-container';
+    categoryDiv.innerHTML = `<strong class="dynamic-heading">${category}</strong> <button class="dynamic-btn" onclick="deleteAdditionalCost('${category}')">Delete Category</button>`;
     costs.forEach((cost, costIndex) => {
-      const costInfo = `From ${cost.startMonth}: Real: ${cost.realCost}, Buffer: ${cost.bufferCost}, Total: ${cost.realCost + cost.bufferCost}`;
-      appendToElement(categoryDiv, costInfo, 'p', 'additional-cost-info');
-      categoryDiv.innerHTML += `<button onclick="deleteIndividualCost('${category}', ${costIndex})">Delete</button>`;
+      const costInfo = `From ${cost.startMonth}:\nReal: ${cost.realCost}, Buffer: ${cost.bufferCost}\nTotal: ${cost.realCost + cost.bufferCost}`;
+      appendToElement(categoryDiv, costInfo, 'p', 'dynamic-text');
+      categoryDiv.innerHTML += `<button class="dynamic-btn" onclick="deleteIndividualCost('${category}', ${costIndex})">Delete</button>`;
     });
     additionalCostList.appendChild(categoryDiv);
   });
 }
 
 function updateBillingList() {
-  updateList(billingList, listOfRegisteredBilling, (bill, index) => `<li>${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end} <button onclick="deleteBilling(${index})">Delete</button></li>`);
+  updateList(billingList, listOfRegisteredBilling, (bill, index) => `<li>${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end} <button class="dynamic-btn" onclick="deleteBilling(${index})">Delete</button></li>`);
 }
 
-function appendToElement(parent, text, tagName = 'p', className = "") {
+function appendToElement(parent, text, tagName = 'p', className = "dynamic-text") {
   const element = document.createElement(tagName);
   element.textContent = text;
   element.className = className;
   parent.appendChild(element);
 }
 
-// logic
+// Calculation logic
 function calculateAndDisplayBilling(bill, div) {
   const billingTotalMonths = calculateTotalMonths(bill.start, bill.end);
   const sortedExpenseDurations = getSortedExpenseDurations(bill.category);
@@ -248,7 +250,7 @@ function calculatePendingText(months) {
 function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults) {
   appendToElement(div, `Advance expense payments: ${sumOfAdvanceExpensePayments}`);
   appendToElement(div, `Buffer payments: ${sumOfBufferPayments}`);
-  appendToElement(div, `Pending payments per month: ${pendingPaymentsPerMonth}`);
+  appendToElement(div, `Pending payments per month: ${roundToTwoDecimals(pendingPaymentsPerMonth)}`);
   appendToElement(div, `Tenants:`);
 
   Object.entries(tenantResults).forEach(([tenant, data]) => {

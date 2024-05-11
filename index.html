@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shared Expenses Tracker</title>
-  <link rel="stylesheet" href="default.css">
+  <!--  <link rel="stylesheet" href="default.css">-->
   <link rel="stylesheet" href="style.css">
   <meta name="description" content="FSSCMS is a hacked-together project designed to assist the main tenant in efficiently managing and tracking utility bills for a shared apartment. Its primary purpose is to facilitate the management of utility bill reimbursements to the roommates based on their individual share of the expenses.">
 
@@ -51,10 +51,15 @@
 </div>
 <div id="result">
   <h2>Result</h2>
-  <button type="button" id="calculateButton">Calculate</button>
-  <button type="button" id="exportButton">Export Data</button>
-  <input type="file" id="importFile" style="display: none;">
-  <button type="button" id="importButton">Import Data</button>
+  <div id="resultInteractions">
+
+    <button type="button" id="calculateButton">Calculate</button>
+    <div id="save">
+      <input type="file" id="importFile" style="display: none;">
+      <button type="button" id="importButton">Import Data</button>
+      <button type="button" id="exportButton">Export Data</button>
+    </div>
+  </div>
   <div id="resultDiv"></div>
 </div>
 <script src="app.js" type="module"></script>
