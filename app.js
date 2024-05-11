@@ -79,25 +79,26 @@ function updateList(element, items, formatter) {
 }
 
 function updateTenantList() {
-  updateList(tenantList, listOfRegisteredTenants, tenant => `<li>${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut})</li>`);
+  updateList(tenantList, listOfRegisteredTenants, (tenant, index) => `<li>${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut}) <button onclick="deleteTenant(${index})">Delete</button></li>`);
 }
 
 function updateAdditionalCostList() {
   additionalCostList.innerHTML = '';
-  Object.keys(listOfRegisteredAdditionalCosts).forEach(category => {
+  Object.keys(listOfRegisteredAdditionalCosts).forEach((category, index) => {
     const costs = listOfRegisteredAdditionalCosts[category];
     const categoryDiv = document.createElement('div');
-    categoryDiv.innerHTML = `<strong>${category}</strong>`;
-    costs.forEach(cost => {
+    categoryDiv.innerHTML = `<strong>${category}</strong> <button onclick="deleteAdditionalCost('${category}')">Delete Category</button>`;
+    costs.forEach((cost, costIndex) => {
       const costInfo = `From ${cost.startMonth}: Real: ${cost.realCost}, Buffer: ${cost.bufferCost}, Total: ${cost.realCost + cost.bufferCost}`;
       appendToElement(categoryDiv, costInfo, 'p', 'additional-cost-info');
+      categoryDiv.innerHTML += `<button onclick="deleteIndividualCost('${category}', ${costIndex})">Delete</button>`;
     });
     additionalCostList.appendChild(categoryDiv);
   });
 }
 
 function updateBillingList() {
-  updateList(billingList, listOfRegisteredBilling, bill => `<li>${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end}</li>`);
+  updateList(billingList, listOfRegisteredBilling, (bill, index) => `<li>${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end} <button onclick="deleteBilling(${index})">Delete</button></li>`);
 }
 
 function appendToElement(parent, text, tagName = 'p', className = "") {
@@ -257,6 +258,29 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, p
   });
 }
 
+// delete
+function deleteTenant(index) {
+  listOfRegisteredTenants.splice(index, 1);
+  updateTenantList();
+}
+
+function deleteAdditionalCost(category) {
+  delete listOfRegisteredAdditionalCosts[category];
+  updateAdditionalCostList();
+}
+
+function deleteIndividualCost(category, index) {
+  listOfRegisteredAdditionalCosts[category].splice(index, 1);
+  if (listOfRegisteredAdditionalCosts[category].length === 0) {
+    delete listOfRegisteredAdditionalCosts[category];
+  }
+  updateAdditionalCostList();
+}
+
+function deleteBilling(index) {
+  listOfRegisteredBilling.splice(index, 1);
+  updateBillingList();
+}
 
 
 function compareDatesByYearAndMonth(date1, date2, name) {
