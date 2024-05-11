@@ -1,0 +1,37 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+#app {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+section {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 5px;
+  width: 45%;
+}
+
+input, button {
+  margin: 10px 0;
+  display: block;
+  width: 95%;
+}
+
+ul, div {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 5px;
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.additional-cost-change-block {
+  white-space: pre-wrap;
+}

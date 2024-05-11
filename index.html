@@ -1,0 +1,59 @@
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shared Expenses Tracker</title>
+  <link rel="stylesheet" href="default.css">
+  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="FSSCMS is a hacked-together project designed to assist the main tenant in efficiently managing and tracking utility bills for a shared apartment. Its primary purpose is to facilitate the management of utility bill reimbursements to the roommates based on their individual share of the expenses.">
+
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+</head>
+
+<body>
+<h1>Shared Expenses Tracker</h1>
+<div id="app">
+  <section>
+    <h2>Tenant Management</h2>
+    <form id="tenantForm">
+      <input type="text" id="tenantName" placeholder="Tenant Name" required>
+      <input type="month" id="dateMoveIn" required>
+      <input type="month" id="dateMoveOut">
+      <button type="submit">Add Tenant</button>
+    </form>
+    <ul id="tenantList"></ul>
+  </section>
+  <section>
+    <h2>Expense Management</h2>
+    <form id="additionalCostForm">
+      <input type="text" id="expenseCategory" placeholder="Expense Type" required>
+      <input type="number" id="realAmount" placeholder="Real Amount" required>
+      <input type="number" id="bufferAmount" placeholder="Buffer Amount" required>
+      <input type="month" id="startMonth" required>
+      <button type="submit">Add Expense</button>
+    </form>
+    <div id="additionalCostList"></div>
+  </section>
+  <section>
+    <h2>Actual Costs and Billing</h2>
+    <form id="billingForm">
+      <input type="text" id="billingCategory" placeholder="Expense Type" required>
+      <input type="number" id="pendingAmount" placeholder="Pending Payments" required title="negative means you they have to send you money">
+      <input type="month" id="billingStart" required>
+      <input type="month" id="billingEnd" required>
+      <button type="submit">Add Billing</button>
+    </form>
+    <div id="billingList"></div>
+  </section>
+</div>
+<div id="result">
+  <h2>Result</h2>
+  <button type="submit" id="calculateButton">Calculate</button>
+  <div id="resultDiv"></div>
+</div>
+<script src="app.js" type="module"></script>
+</body>
+</html>
