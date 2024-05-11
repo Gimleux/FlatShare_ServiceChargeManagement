@@ -6,12 +6,15 @@ const billingForm = document.getElementById('billingForm');
 const billingList = document.getElementById('billingList');
 const calculateButton = document.getElementById('calculateButton');
 const resultDiv = document.getElementById('resultDiv');
+document.getElementById('exportButton').addEventListener('click', exportData);
+document.getElementById('importButton').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', importData);
 
 const NO_END_DATE_STRING = 'unlimited';
 
 // Data
 let listOfRegisteredTenants = []
-let listOfRegisteredAdditionalCosts = []
+let listOfRegisteredAdditionalCosts = {}
 let listOfRegisteredBilling = []
 
 // Event handlers
@@ -282,6 +285,38 @@ function deleteBilling(index) {
   updateBillingList();
 }
 
+
+// Export and import logic
+function exportData() {
+  console.log(listOfRegisteredAdditionalCosts)
+  const data = {
+    tenants: listOfRegisteredTenants,
+    additionalCosts: listOfRegisteredAdditionalCosts,
+    billing: listOfRegisteredBilling
+  };
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "expenses_data.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+function importData(event) {
+  const fileReader = new FileReader();
+  fileReader.onload = function(fileLoadedEvent) {
+    const textFromFileLoaded = fileLoadedEvent.target.result;
+    const importedData = JSON.parse(textFromFileLoaded);
+    listOfRegisteredTenants = importedData.tenants;
+    listOfRegisteredAdditionalCosts = importedData.additionalCosts;
+    listOfRegisteredBilling = importedData.billing;
+    updateTenantList();
+    updateAdditionalCostList();
+    updateBillingList();
+  };
+  fileReader.readAsText(event.target.files[0], "UTF-8");
+}
 
 function compareDatesByYearAndMonth(date1, date2, name) {
   const year1 = date1.getFullYear();
