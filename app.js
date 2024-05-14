@@ -17,6 +17,31 @@ let listOfRegisteredTenants = []
 let listOfRegisteredAdditionalCosts = {}
 let listOfRegisteredBilling = []
 
+// delete
+function deleteTenant(index) {
+  listOfRegisteredTenants.splice(index, 1);
+  console.log(listOfRegisteredTenants)
+  updateTenantList();
+}
+
+function deleteAdditionalCost(category) {
+  delete listOfRegisteredAdditionalCosts[category];
+  updateAdditionalCostList();
+}
+
+function deleteIndividualCost(category, index) {
+  listOfRegisteredAdditionalCosts[category].splice(index, 1);
+  if (listOfRegisteredAdditionalCosts[category].length === 0) {
+    delete listOfRegisteredAdditionalCosts[category];
+  }
+  updateAdditionalCostList();
+}
+
+function deleteBilling(index) {
+  listOfRegisteredBilling.splice(index, 1);
+  updateBillingList();
+}
+
 // Event handlers
 function handleFormSubmit(event, action, update) {
   event.preventDefault();
@@ -79,11 +104,38 @@ function addBilling(category, pendingPayments, start, end) {
 
 // DOM update functions
 function updateList(element, items, formatter) {
-  element.innerHTML = items.map(formatter).join('');
+  element.innerHTML = '';
+  items.map(formatter).forEach(item => {
+    if (item instanceof Element) {
+      element.appendChild(item);
+    } else {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = item;
+      element.appendChild(wrapper.firstChild);
+    }
+  });
 }
 
 function updateTenantList() {
-  updateList(tenantList, listOfRegisteredTenants, (tenant, index) => `<li>${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut}) <button class="dynamic-btn" onclick="deleteTenant(${index})">Delete</button></li>`);
+  updateList(
+      tenantList,
+      listOfRegisteredTenants,
+      (tenant, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut})`;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('dynamic-btn');
+        deleteButton.textContent = 'Delete';
+
+        deleteButton.addEventListener('click', () => {
+          deleteTenant(index);
+        });
+
+        li.appendChild(deleteButton);
+        return li;
+      }
+  );
 }
 
 function updateAdditionalCostList() {
@@ -92,19 +144,60 @@ function updateAdditionalCostList() {
     const costs = listOfRegisteredAdditionalCosts[category];
     const categoryDiv = document.createElement('div');
     categoryDiv.className = 'dynamic-container';
-    categoryDiv.innerHTML = `<strong class="dynamic-heading">${category}</strong> <button class="dynamic-btn" onclick="deleteAdditionalCost('${category}')">Delete Category</button>`;
+
+    const categoryHeading = document.createElement('strong');
+    categoryHeading.className = 'dynamic-heading';
+    categoryHeading.textContent = category;
+    categoryDiv.appendChild(categoryHeading);
+
+    const deleteCategoryButton = document.createElement('button');
+    deleteCategoryButton.className = 'dynamic-btn';
+    deleteCategoryButton.textContent = 'Delete Category';
+    deleteCategoryButton.addEventListener('click', () => {
+      deleteAdditionalCost(category);
+    });
+    categoryDiv.appendChild(deleteCategoryButton);
+
     costs.forEach((cost, costIndex) => {
       const costInfo = `From ${cost.startMonth}:\nReal: ${cost.realCost}, Buffer: ${cost.bufferCost}\nTotal: ${cost.realCost + cost.bufferCost}`;
       appendToElement(categoryDiv, costInfo, 'p', 'dynamic-text');
-      categoryDiv.innerHTML += `<button class="dynamic-btn" onclick="deleteIndividualCost('${category}', ${costIndex})">Delete</button>`;
+
+      const deleteButton = document.createElement('button');
+      deleteButton.className = 'dynamic-btn';
+      deleteButton.textContent = 'Delete';
+      deleteButton.addEventListener('click', () => {
+        deleteIndividualCost(category, costIndex);
+      });
+      categoryDiv.appendChild(deleteButton);
     });
+
     additionalCostList.appendChild(categoryDiv);
   });
 }
 
+
 function updateBillingList() {
-  updateList(billingList, listOfRegisteredBilling, (bill, index) => `<li>${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end} <button class="dynamic-btn" onclick="deleteBilling(${index})">Delete</button></li>`);
+  updateList(
+      billingList,
+      listOfRegisteredBilling,
+      (bill, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end}`;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('dynamic-btn');
+        deleteButton.textContent = 'Delete';
+
+        deleteButton.addEventListener('click', () => {
+          deleteBilling(index);
+        });
+
+        li.appendChild(deleteButton);
+        return li;
+      }
+  );
 }
+
 
 function appendToElement(parent, text, tagName = 'p', className = "dynamic-text") {
   const element = document.createElement(tagName);
@@ -261,30 +354,6 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, p
     appendToElement(div, data.pendingText);
     appendToElement(div, `Total pending payments net: ${data.totalPendingPaymentsNet}`, 'strong');
   });
-}
-
-// delete
-function deleteTenant(index) {
-  listOfRegisteredTenants.splice(index, 1);
-  updateTenantList();
-}
-
-function deleteAdditionalCost(category) {
-  delete listOfRegisteredAdditionalCosts[category];
-  updateAdditionalCostList();
-}
-
-function deleteIndividualCost(category, index) {
-  listOfRegisteredAdditionalCosts[category].splice(index, 1);
-  if (listOfRegisteredAdditionalCosts[category].length === 0) {
-    delete listOfRegisteredAdditionalCosts[category];
-  }
-  updateAdditionalCostList();
-}
-
-function deleteBilling(index) {
-  listOfRegisteredBilling.splice(index, 1);
-  updateBillingList();
 }
 
 
