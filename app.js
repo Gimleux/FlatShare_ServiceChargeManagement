@@ -10,6 +10,7 @@ document.getElementById('exportButton').addEventListener('click', exportData);
 document.getElementById('importButton').addEventListener('click', () => document.getElementById('importFile').click());
 document.getElementById('importFile').addEventListener('change', importData);
 document.getElementById('removeAllDataButton').addEventListener('click', removeAllData);
+window.addEventListener('load', loadDataFromLocalStorage);
 
 const NO_END_DATE_STRING = 'unlimited';
 
@@ -26,6 +27,19 @@ function removeAllData() {
   updateAdditionalCostList();
   updateBillingList();
   resultDiv.innerHTML = '';
+}
+
+function updateAll(data) {
+  if (data) {
+    listOfRegisteredTenants = data.tenants;
+    listOfRegisteredAdditionalCosts = data.additionalCosts;
+    listOfRegisteredBilling = data.billing;
+  }
+  updateTenantList();
+  updateAdditionalCostList();
+  updateBillingList();
+  handleCalculateButtonClick();
+  saveDataToLocalStorage();
 }
 
 // delete
@@ -100,6 +114,7 @@ function handleCalculateButtonClick() {
 // Data management functions
 function addTenant(name, dateMoveIn, dateMoveOut = NO_END_DATE_STRING) {
   listOfRegisteredTenants.push({name, dateMoveIn, dateMoveOut});
+  saveDataToLocalStorage();
 }
 
 function addAdditionalCost(category, realCost, bufferCost, startMonth) {
@@ -107,10 +122,12 @@ function addAdditionalCost(category, realCost, bufferCost, startMonth) {
     listOfRegisteredAdditionalCosts[category] = [];
   }
   listOfRegisteredAdditionalCosts[category].push({realCost, bufferCost, startMonth});
+  saveDataToLocalStorage();
 }
 
 function addBilling(category, pendingPayments, start, end) {
   listOfRegisteredBilling.push({category, pendingPayments, start, end});
+  saveDataToLocalStorage();
 }
 
 // DOM update functions
@@ -147,6 +164,7 @@ function updateTenantList() {
         return li;
       }
   );
+  saveDataToLocalStorage();
 }
 
 function updateAdditionalCostList() {
@@ -158,7 +176,7 @@ function updateAdditionalCostList() {
 
     const categoryHeading = document.createElement('strong');
     const collapsibleContent = document.createElement('div');
-    collapsibleContent.className = 'collapsible-content show';
+    collapsibleContent.className = 'collapsible-content';
     categoryHeading.className = 'dynamic-heading';
     categoryHeading.textContent = category;
     categoryHeading.addEventListener('click', () => {
@@ -190,6 +208,7 @@ function updateAdditionalCostList() {
     categoryDiv.appendChild(collapsibleContent);
     additionalCostList.appendChild(categoryDiv);
   });
+  saveDataToLocalStorage();
 }
 
 
@@ -214,6 +233,7 @@ function updateBillingList() {
         return li;
       }
   );
+  saveDataToLocalStorage();
 }
 
 
@@ -374,6 +394,26 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, p
   });
 }
 
+// local storage
+function saveDataToLocalStorage() {
+  console.log("saveDataToLocalStorage")
+  const data = {
+    tenants: listOfRegisteredTenants,
+    additionalCosts: listOfRegisteredAdditionalCosts,
+    billing: listOfRegisteredBilling
+  };
+  console.log(data)
+  localStorage.setItem('expensesData', JSON.stringify(data));
+}
+
+function loadDataFromLocalStorage() {
+  const data = localStorage.getItem('expensesData');
+  if (data) {
+    const parsedData = JSON.parse(data);
+    updateAll(parsedData);
+  }
+}
+
 
 // Export and import logic
 function exportData() {
@@ -397,12 +437,7 @@ function importData(event) {
   fileReader.onload = function(fileLoadedEvent) {
     const textFromFileLoaded = fileLoadedEvent.target.result;
     const importedData = JSON.parse(textFromFileLoaded);
-    listOfRegisteredTenants = importedData.tenants;
-    listOfRegisteredAdditionalCosts = importedData.additionalCosts;
-    listOfRegisteredBilling = importedData.billing;
-    updateTenantList();
-    updateAdditionalCostList();
-    updateBillingList();
+    updateAll(importedData);
   };
   fileReader.readAsText(event.target.files[0], "UTF-8");
 }
