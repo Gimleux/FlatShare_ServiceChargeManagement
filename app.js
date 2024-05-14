@@ -9,6 +9,7 @@ const resultDiv = document.getElementById('resultDiv');
 document.getElementById('exportButton').addEventListener('click', exportData);
 document.getElementById('importButton').addEventListener('click', () => document.getElementById('importFile').click());
 document.getElementById('importFile').addEventListener('change', importData);
+document.getElementById('removeAllDataButton').addEventListener('click', removeAllData);
 
 const NO_END_DATE_STRING = 'unlimited';
 
@@ -16,6 +17,16 @@ const NO_END_DATE_STRING = 'unlimited';
 let listOfRegisteredTenants = []
 let listOfRegisteredAdditionalCosts = {}
 let listOfRegisteredBilling = []
+
+function removeAllData() {
+  listOfRegisteredTenants = [];
+  listOfRegisteredAdditionalCosts = {};
+  listOfRegisteredBilling = [];
+  updateTenantList();
+  updateAdditionalCostList();
+  updateBillingList();
+  resultDiv.innerHTML = '';
+}
 
 // delete
 function deleteTenant(index) {
