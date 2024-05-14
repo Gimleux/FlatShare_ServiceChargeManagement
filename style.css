@@ -123,6 +123,15 @@ header {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+.collapsible-content {
+  display: none;
+  padding-left: 20px;
+}
+
+.collapsible-content.show {
+  display: block;
+}
+
 @media (max-width: 768px) {
   #app {
     grid-template-columns: 1fr;

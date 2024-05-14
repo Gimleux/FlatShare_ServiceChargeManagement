@@ -157,8 +157,13 @@ function updateAdditionalCostList() {
     categoryDiv.className = 'dynamic-container';
 
     const categoryHeading = document.createElement('strong');
+    const collapsibleContent = document.createElement('div');
+    collapsibleContent.className = 'collapsible-content show';
     categoryHeading.className = 'dynamic-heading';
     categoryHeading.textContent = category;
+    categoryHeading.addEventListener('click', () => {
+      collapsibleContent.classList.toggle('show');
+    });
     categoryDiv.appendChild(categoryHeading);
 
     const deleteCategoryButton = document.createElement('button');
@@ -171,7 +176,7 @@ function updateAdditionalCostList() {
 
     costs.forEach((cost, costIndex) => {
       const costInfo = `From ${cost.startMonth}:\nReal: ${cost.realCost}, Buffer: ${cost.bufferCost}\nTotal: ${cost.realCost + cost.bufferCost}`;
-      appendToElement(categoryDiv, costInfo, 'p', 'dynamic-text');
+      appendToElement(collapsibleContent, costInfo, 'p', 'dynamic-text');
 
       const deleteButton = document.createElement('button');
       deleteButton.className = 'dynamic-btn';
@@ -179,12 +184,14 @@ function updateAdditionalCostList() {
       deleteButton.addEventListener('click', () => {
         deleteIndividualCost(category, costIndex);
       });
-      categoryDiv.appendChild(deleteButton);
+      collapsibleContent.appendChild(deleteButton);
     });
 
+    categoryDiv.appendChild(collapsibleContent);
     additionalCostList.appendChild(categoryDiv);
   });
 }
+
 
 
 function updateBillingList() {
