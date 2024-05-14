@@ -34,8 +34,8 @@
     <h2>Expense Management</h2>
     <form id="additionalCostForm">
       <input type="text" id="expenseCategory" placeholder="Expense Type" required>
-      <input type="number" id="realAmount" placeholder="Real Amount" required>
-      <input type="number" id="bufferAmount" placeholder="Buffer Amount" required>
+      <input type="text" id="realAmount" placeholder="Real Amount" required>
+      <input type="text" id="bufferAmount" placeholder="Buffer Amount" required>
       <input type="month" id="startMonth" required>
       <button type="submit">Add Expense</button>
     </form>
@@ -45,7 +45,7 @@
     <h2>Actual Costs and Billing</h2>
     <form id="billingForm">
       <input type="text" id="billingCategory" placeholder="Expense Type" required>
-      <input type="number" id="pendingAmount" placeholder="Pending Payments" required title="negative means you they have to send you money">
+      <input type="text" id="pendingAmount" placeholder="Pending Payments" required title="negative means you they have to send you money">
       <input type="month" id="billingStart" required>
       <input type="month" id="billingEnd" required>
       <button type="submit">Add Billing</button>

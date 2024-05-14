@@ -45,7 +45,6 @@ function updateAll(data) {
 // delete
 function deleteTenant(index) {
   listOfRegisteredTenants.splice(index, 1);
-  console.log(listOfRegisteredTenants)
   updateTenantList();
 }
 
@@ -83,15 +82,15 @@ tenantForm.addEventListener('submit', (event) => handleFormSubmit(event, () => {
 
 additionalCostForm.addEventListener('submit', (event) => handleFormSubmit(event, () => {
   const category = document.getElementById('expenseCategory').value;
-  const realCost = parseFloat(document.getElementById('realAmount').value);
-  const bufferCost = parseFloat(document.getElementById('bufferAmount').value);
+  const realCost = parseDecimalInput(document.getElementById('realAmount').value);
+  const bufferCost = parseDecimalInput(document.getElementById('bufferAmount').value);
   const startMonth = document.getElementById('startMonth').value;
   addAdditionalCost(category, realCost, bufferCost, startMonth);
 }, updateAdditionalCostList));
 
 billingForm.addEventListener('submit', (event) => handleFormSubmit(event, () => {
   const category = document.getElementById('billingCategory').value;
-  const pendingPayments = parseFloat(document.getElementById('pendingAmount').value);
+  const pendingPayments = parseDecimalInput(document.getElementById('pendingAmount').value);
   const start = document.getElementById('billingStart').value;
   const end = document.getElementById('billingEnd').value;
   addBilling(category, pendingPayments, start, end);
@@ -118,6 +117,10 @@ function addTenant(name, dateMoveIn, dateMoveOut = NO_END_DATE_STRING) {
 }
 
 function addAdditionalCost(category, realCost, bufferCost, startMonth) {
+  if (!stringIsNumber(realCost) || !stringIsNumber(bufferCost)) {
+    alert("Please enter a valid number for the cost fields.");
+    return;
+  }
   if (!listOfRegisteredAdditionalCosts[category]) {
     listOfRegisteredAdditionalCosts[category] = [];
   }
@@ -126,6 +129,10 @@ function addAdditionalCost(category, realCost, bufferCost, startMonth) {
 }
 
 function addBilling(category, pendingPayments, start, end) {
+  if (!stringIsNumber(pendingPayments)) {
+    alert("Please enter a valid number for the pending payments field.");
+    return;
+  }
   listOfRegisteredBilling.push({category, pendingPayments, start, end});
   saveDataToLocalStorage();
 }
@@ -396,13 +403,11 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, p
 
 // local storage
 function saveDataToLocalStorage() {
-  console.log("saveDataToLocalStorage")
   const data = {
     tenants: listOfRegisteredTenants,
     additionalCosts: listOfRegisteredAdditionalCosts,
     billing: listOfRegisteredBilling
   };
-  console.log(data)
   localStorage.setItem('expensesData', JSON.stringify(data));
 }
 
@@ -417,7 +422,6 @@ function loadDataFromLocalStorage() {
 
 // Export and import logic
 function exportData() {
-  console.log(listOfRegisteredAdditionalCosts)
   const data = {
     tenants: listOfRegisteredTenants,
     additionalCosts: listOfRegisteredAdditionalCosts,
@@ -485,4 +489,23 @@ function formatDate(date) {
 
 function roundToTwoDecimals(number) {
   return Math.round(number * 100) / 100;
+}
+
+function parseDecimalInput(input) {
+  let cleanedInput = input;
+  if (input.split('').filter(char => char === ',' || char === ".").length > 1) {
+    const parts = input.split(/[,.]/g);
+    cleanedInput = parts.reduce((acc, char, currentIndex, array) => {
+      if (currentIndex === array.length - 1) {
+        return acc.concat('.').concat(char);
+      }
+      return acc.concat(char);
+    },"")
+  }
+  const decimalInput = cleanedInput.replace(/,/g, '.');
+  return parseFloat(decimalInput);
+}
+
+function stringIsNumber(string) {
+  return /^[0-9.,]+$/.test(string);;
 }
