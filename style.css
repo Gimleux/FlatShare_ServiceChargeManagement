@@ -33,7 +33,7 @@ header {
 }
 
 header h1 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d99 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -59,8 +59,8 @@ section {
 section h2 {
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 3px solid #667eea;
-  color: #667eea;
+  border-bottom: 3px solid #5568d3;
+  color: #5568d3;
   font-size: 22px;
 }
 
@@ -76,12 +76,12 @@ input, button, select {
 
 input:focus, select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #5568d3;
+  box-shadow: 0 0 0 3px rgba(85, 104, 211, 0.15);
 }
 
-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+button:not(.dynamic-btn):not(#removeAllDataButton) {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d99 100%);
   color: white;
   border: none;
   cursor: pointer;
@@ -89,9 +89,9 @@ button {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-button:hover {
+button:not(.dynamic-btn):not(#removeAllDataButton):hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(85, 104, 211, 0.4);
 }
 
 button:active {
@@ -105,7 +105,7 @@ ul {
 
 li {
   background: #f9f9f9;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #5568d3;
   border-radius: 6px;
   padding: 12px;
   margin-top: 10px;
@@ -116,21 +116,26 @@ li {
 }
 
 #removeAllDataButton {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background-color: #7f1d1d;
   color: white;
-  border: none;
+  border: 3px solid #7f1d1d;
   border-radius: 8px;
   padding: 10px 20px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   width: auto;
   margin: 0;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(127, 29, 29, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 #removeAllDataButton:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  background-color: #991b1b;
+  border-color: #991b1b;
+  box-shadow: 0 4px 8px rgba(127, 29, 29, 0.6);
+  transform: translateY(-1px);
 }
 
 
@@ -160,11 +165,11 @@ li {
 
 #calculateButton {
   width: 150px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
 }
 
 #calculateButton:hover {
-  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
 }
 
 #save {
@@ -244,13 +249,13 @@ li {
 }
 
 .dynamic-heading {
-  color: #667eea;
+  color: #5568d3;
   font-size: 20px;
   margin: 0;
 }
 
 .date-range {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
   color: white;
   padding: 6px 16px;
   border-radius: 20px;
@@ -265,7 +270,7 @@ li {
 
 .dynamic-list li {
   padding: 12px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #5568d3;
   border-radius: 6px;
   margin-bottom: 8px;
 }
@@ -274,18 +279,24 @@ li {
   padding: 10px 18px;
   margin-top: 10px;
   margin-right: 10px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background-color: #7f1d1d;
   color: white;
-  border: none;
+  border: 3px solid #7f1d1d;
   border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s;
+  font-weight: 700;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(127, 29, 29, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
 }
 
 .dynamic-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  background-color: #991b1b;
+  border-color: #991b1b;
+  box-shadow: 0 4px 8px rgba(127, 29, 29, 0.6);
+  transform: translateY(-1px);
 }
 
 .dynamic-text {
@@ -310,21 +321,47 @@ li {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .summary-box-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d99 100%);
   color: white;
+  border: 3px solid #3b4a9a;
 }
 
-.summary-box-green {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+.summary-box-teal {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
+  border: 3px solid #4f46e5;
 }
 
 .summary-box-purple {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: white;
+  border: 3px solid #6d28d9;
+}
+
+.summary-box-orange {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: 3px solid #b45309;
+}
+
+.summary-box-green {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  border: 3px solid #0f766e;
+  position: relative;
+}
+
+.summary-box-green::before {
+  content: '↓';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  font-weight: bold;
 }
 
 .summary-label {
@@ -342,16 +379,43 @@ li {
 .tenants-heading {
   margin-top: 30px;
   margin-bottom: 20px;
-  color: #333;
+  color: #1f2937;
   font-size: 24px;
-  border-bottom: 3px solid #5c67f2;
+  border-bottom: 3px solid #5568d3;
   padding-bottom: 10px;
+  position: relative;
+  user-select: none;
+}
+
+.tenants-heading.collapsible::after {
+  content: '▼';
+  position: absolute;
+  right: 0;
+  transition: transform 0.3s;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.tenants-heading.collapsible.expanded::after {
+  transform: rotate(180deg);
+}
+
+.tenants-heading.collapsible:hover {
+  color: #5568d3;
 }
 
 .tenants-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out;
+}
+
+.tenants-container.show {
+  max-height: 10000px;
+  transition: max-height 1s ease-in;
 }
 
 .tenant-card {
@@ -362,7 +426,7 @@ li {
 }
 
 .tenant-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d99 100%);
   color: white;
   padding: 20px;
   display: flex;
@@ -380,16 +444,29 @@ li {
   border-radius: 20px;
   font-weight: bold;
   font-size: 16px;
+  position: relative;
 }
 
-.total-badge.positive {
-  background-color: rgba(255, 255, 255, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.5);
+.total-badge.payment {
+  background-color: #f59e0b;
+  border: 2px solid #d97706;
+  color: white;
 }
 
-.total-badge.negative {
-  background-color: rgba(76, 175, 80, 0.3);
-  border: 2px solid rgba(76, 175, 80, 0.5);
+.total-badge.payment::before {
+  content: '↑ ';
+  font-weight: bold;
+}
+
+.total-badge.refund {
+  background-color: #14b8a6;
+  border: 2px solid #0d9488;
+  color: white;
+}
+
+.total-badge.refund::before {
+  content: '↓ ';
+  font-weight: bold;
 }
 
 .tenant-details {
@@ -408,13 +485,13 @@ li {
 
 .info-label {
   font-weight: 600;
-  color: #555;
+  color: #374151;
   display: block;
   margin-bottom: 5px;
 }
 
 .info-value {
-  color: #333;
+  color: #1f2937;
   font-size: 16px;
 }
 
@@ -428,7 +505,7 @@ li {
   padding: 6px 12px;
   margin: 5px 0;
   background: #f8f9fa;
-  border-left: 4px solid #5c67f2;
+  border-left: 4px solid #5568d3;
   border-radius: 4px;
 }
 
@@ -441,7 +518,7 @@ li {
 
 .pending-header {
   padding: 12px 15px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -462,7 +539,7 @@ li {
 }
 
 .pending-header:hover {
-  background: linear-gradient(135deg, #3f9bee 0%, #00d9ee 100%);
+  background: linear-gradient(135deg, #0e7490 0%, #0c4a6e 100%);
 }
 
 .pending-content {
@@ -486,10 +563,11 @@ li {
   padding: 10px 12px;
   margin: 8px 0;
   background: white;
-  border-left: 4px solid #4facfe;
+  border-left: 4px solid #0891b2;
   border-radius: 4px;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 14px;
+  color: #1f2937;
 }
 
 @media (max-width: 768px) {

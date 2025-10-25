@@ -186,7 +186,7 @@ function updateTenantList() {
 
         const deleteButton = document.createElement('button');
         deleteButton.classList.add('dynamic-btn');
-        deleteButton.textContent = 'Delete';
+        deleteButton.innerHTML = '🗑️ Delete Tenant';
 
         deleteButton.addEventListener('click', () => {
           deleteTenant(index);
@@ -218,7 +218,7 @@ function updateAdditionalCostList() {
 
     const deleteCategoryButton = document.createElement('button');
     deleteCategoryButton.className = 'dynamic-btn';
-    deleteCategoryButton.textContent = 'Delete Category';
+    deleteCategoryButton.innerHTML = '🗑️ Delete Category';
     deleteCategoryButton.addEventListener('click', () => {
       deleteAdditionalCost(category);
     });
@@ -230,7 +230,7 @@ function updateAdditionalCostList() {
 
       const deleteButton = document.createElement('button');
       deleteButton.className = 'dynamic-btn';
-      deleteButton.textContent = 'Delete';
+      deleteButton.innerHTML = '🗑️ Delete Cost Segment';
       deleteButton.addEventListener('click', () => {
         deleteIndividualCost(category, costIndex);
       });
@@ -255,7 +255,7 @@ function updateBillingList() {
 
         const deleteButton = document.createElement('button');
         deleteButton.classList.add('dynamic-btn');
-        deleteButton.textContent = 'Delete';
+        deleteButton.innerHTML = '🗑️ Delete Billing';
 
         deleteButton.addEventListener('click', () => {
           deleteBilling(index);
@@ -287,7 +287,7 @@ function calculateAndDisplayBilling(bill, div) {
   const { sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth } = calculatePayments(monthlyDetails, tenantsBillingInformation, bill.pendingPayments);
   const tenantResults = calculateTenantResults(tenantsBillingInformation);
 
-  displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults);
+  displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, bill.pendingPayments, pendingPaymentsPerMonth, tenantResults);
 }
 
 function calculateTotalMonths(billingStart, billingEnd) {
@@ -413,7 +413,10 @@ function calculatePendingText(months) {
   return pendingText;
 }
 
-function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults) {
+function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, totalPendingPayments, pendingPaymentsPerMonth, tenantResults) {
+  // Calculate total payment/refund
+  const totalPaymentRefund = Object.values(tenantResults).reduce((sum, tenant) => sum + tenant.totalPendingPaymentsNet, 0);
+  
   // Summary Section
   const summaryDiv = document.createElement('div');
   summaryDiv.className = 'summary-section';
@@ -422,23 +425,48 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, p
   summaryGrid.className = 'summary-grid';
   
   const advanceBox = createSummaryBox('💰 Advance Payments', `${roundToTwoDecimals(sumOfAdvanceExpensePayments)} €`, 'summary-box-blue');
-  const bufferBox = createSummaryBox('🔒 Buffer Payments', `${roundToTwoDecimals(sumOfBufferPayments)} €`, 'summary-box-green');
-  const monthlyBox = createSummaryBox('📅 Per Month', `${roundToTwoDecimals(pendingPaymentsPerMonth)} €`, 'summary-box-purple');
+  const bufferBox = createSummaryBox('🔒 Buffer Payments', `${roundToTwoDecimals(sumOfBufferPayments)} €`, 'summary-box-teal');
+  
+  const pendingBox = createSummaryBox(
+    '💳 Pending Payments', 
+    `${roundToTwoDecimals(totalPendingPayments)} €`, 
+    totalPendingPayments > 0 ? 'summary-box-orange' : 'summary-box-green'
+  );
+  
+  const monthlyBox = createSummaryBox(
+    '📅 Per Month', 
+    `${roundToTwoDecimals(pendingPaymentsPerMonth)} €`, 
+    pendingPaymentsPerMonth > 0 ? 'summary-box-orange' : 'summary-box-green'
+  );
+  const totalBox = createSummaryBox(
+    totalPaymentRefund > 0 ? '💸 Total Payment' : (totalPaymentRefund < 0 ? '💵 Total Refund' : '✅ Balanced'), 
+    `${totalPaymentRefund > 0 ? '+' : ''}${roundToTwoDecimals(totalPaymentRefund)} €`, 
+    totalPaymentRefund > 0 ? 'summary-box-orange' : 'summary-box-green'
+  );
   
   summaryGrid.appendChild(advanceBox);
   summaryGrid.appendChild(bufferBox);
+  summaryGrid.appendChild(pendingBox);
   summaryGrid.appendChild(monthlyBox);
+  summaryGrid.appendChild(totalBox);
   summaryDiv.appendChild(summaryGrid);
   div.appendChild(summaryDiv);
 
   // Tenants Section
   const tenantsHeading = document.createElement('h3');
-  tenantsHeading.className = 'tenants-heading';
+  tenantsHeading.className = 'tenants-heading collapsible';
   tenantsHeading.textContent = '👥 Tenant Overview';
-  div.appendChild(tenantsHeading);
-
+  tenantsHeading.style.cursor = 'pointer';
+  
   const tenantsContainer = document.createElement('div');
-  tenantsContainer.className = 'tenants-container';
+  tenantsContainer.className = 'tenants-container collapsible-content';
+  
+  tenantsHeading.addEventListener('click', () => {
+    tenantsContainer.classList.toggle('show');
+    tenantsHeading.classList.toggle('expanded');
+  });
+  
+  div.appendChild(tenantsHeading);
 
   // Sort tenants: affected first, then unaffected
   const sortedTenants = Object.entries(tenantResults).sort(([, a], [, b]) => {
@@ -459,7 +487,7 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, p
     tenantHeader.appendChild(tenantName);
     
     const totalBadge = document.createElement('div');
-    totalBadge.className = data.totalPendingPaymentsNet >= 0 ? 'total-badge positive' : 'total-badge negative';
+    totalBadge.className = data.totalPendingPaymentsNet >= 0 ? 'total-badge payment' : 'total-badge refund';
     totalBadge.textContent = `${data.totalPendingPaymentsNet >= 0 ? '+' : ''}${data.totalPendingPaymentsNet} €`;
     tenantHeader.appendChild(totalBadge);
     
