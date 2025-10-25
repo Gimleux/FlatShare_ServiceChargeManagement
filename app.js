@@ -177,25 +177,82 @@ function updateList(element, items, formatter) {
 }
 
 function updateTenantList() {
-  updateList(
-      tenantList,
-      listOfRegisteredTenants,
-      (tenant, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${tenant.name} (${tenant.dateMoveIn} - ${tenant.dateMoveOut})`;
+  tenantList.innerHTML = '';
+  
+  if (listOfRegisteredTenants.length === 0) {
+    return;
+  }
+  
+  // Create a grid container for tenants
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'tenant-grid';
+  gridContainer.style.display = 'grid';
+  gridContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+  gridContainer.style.gap = '16px';
+  gridContainer.style.marginTop = '16px';
+  
+  listOfRegisteredTenants.forEach((tenant, index) => {
+    const tenantCard = document.createElement('div');
+    tenantCard.className = 'tenant-input-card';
+    tenantCard.style.background = 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)';
+    tenantCard.style.padding = '20px';
+    tenantCard.style.borderRadius = '12px';
+    tenantCard.style.border = '2px solid #e5e7eb';
+    tenantCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+    tenantCard.style.transition = 'all 0.3s ease';
+    
+    const nameDiv = document.createElement('div');
+    nameDiv.style.marginBottom = '12px';
+    nameDiv.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Tenant Name</div><div style="color: #1f2937; font-size: 18px; font-weight: 700;">${tenant.name}</div>`;
+    
+    const datesDiv = document.createElement('div');
+    datesDiv.style.display = 'grid';
+    datesDiv.style.gridTemplateColumns = '1fr 1fr';
+    datesDiv.style.gap = '12px';
+    datesDiv.style.marginBottom = '16px';
+    datesDiv.style.paddingTop = '12px';
+    datesDiv.style.borderTop = '1px solid #e5e7eb';
+    
+    const moveInDiv = document.createElement('div');
+    moveInDiv.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; margin-bottom: 4px;">Move In</div><div style="color: #0891b2; font-size: 14px; font-weight: 600;">${tenant.dateMoveIn}</div>`;
+    
+    const moveOutDiv = document.createElement('div');
+    moveOutDiv.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; margin-bottom: 4px;">Move Out</div><div style="color: #d97706; font-size: 14px; font-weight: 600;">${tenant.dateMoveOut}</div>`;
+    
+    datesDiv.appendChild(moveInDiv);
+    datesDiv.appendChild(moveOutDiv);
+    
+    tenantCard.appendChild(nameDiv);
+    tenantCard.appendChild(datesDiv);
 
-        const deleteButton = document.createElement('button');
-        deleteButton.classList.add('dynamic-btn');
-        deleteButton.innerHTML = '🗑️ Delete Tenant';
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('dynamic-btn');
+    deleteButton.innerHTML = '🗑️ Delete Tenant';
+    deleteButton.style.width = '100%';
 
-        deleteButton.addEventListener('click', () => {
-          deleteTenant(index);
-        });
+    deleteButton.addEventListener('click', () => {
+      deleteTenant(index);
+    });
 
-        li.appendChild(deleteButton);
-        return li;
-      }
-  );
+    tenantCard.appendChild(deleteButton);
+    
+    // Add hover effect
+    tenantCard.addEventListener('mouseenter', () => {
+      tenantCard.style.transform = 'translateY(-4px)';
+      tenantCard.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
+      tenantCard.style.borderColor = '#5568d3';
+    });
+    
+    tenantCard.addEventListener('mouseleave', () => {
+      tenantCard.style.transform = 'translateY(0)';
+      tenantCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+      tenantCard.style.borderColor = '#e5e7eb';
+    });
+    
+    gridContainer.appendChild(tenantCard);
+  });
+  
+  tenantList.appendChild(gridContainer);
   saveDataToLocalStorage();
 }
 
@@ -206,35 +263,145 @@ function updateAdditionalCostList() {
     const categoryDiv = document.createElement('div');
     categoryDiv.className = 'dynamic-container';
 
+    // Create collapsible header with clear visual indicator
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'expense-category-header';
+    categoryHeader.style.display = 'flex';
+    categoryHeader.style.justifyContent = 'space-between';
+    categoryHeader.style.alignItems = 'center';
+    categoryHeader.style.padding = '16px 20px';
+    categoryHeader.style.background = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+    categoryHeader.style.borderRadius = '10px';
+    categoryHeader.style.cursor = 'pointer';
+    categoryHeader.style.userSelect = 'none';
+    categoryHeader.style.transition = 'all 0.3s ease';
+    categoryHeader.style.marginBottom = '12px';
+    
+    const headerLeft = document.createElement('div');
+    headerLeft.style.display = 'flex';
+    headerLeft.style.alignItems = 'center';
+    headerLeft.style.gap = '12px';
+    
+    const toggleIcon = document.createElement('span');
+    toggleIcon.className = 'toggle-icon';
+    toggleIcon.textContent = '▼';
+    toggleIcon.style.fontSize = '16px';
+    toggleIcon.style.color = 'white';
+    toggleIcon.style.transition = 'transform 0.3s ease';
+    toggleIcon.style.fontWeight = 'bold';
+    
     const categoryHeading = document.createElement('strong');
-    const collapsibleContent = document.createElement('div');
-    collapsibleContent.className = 'collapsible-content';
     categoryHeading.className = 'dynamic-heading';
     categoryHeading.textContent = category;
-    categoryHeading.addEventListener('click', () => {
-      collapsibleContent.classList.toggle('show');
+    categoryHeading.style.color = 'white';
+    categoryHeading.style.margin = '0';
+    
+    const clickHint = document.createElement('span');
+    clickHint.textContent = 'Click to expand';
+    clickHint.style.fontSize = '12px';
+    clickHint.style.color = 'rgba(255,255,255,0.8)';
+    clickHint.style.fontWeight = '500';
+    
+    headerLeft.appendChild(toggleIcon);
+    headerLeft.appendChild(categoryHeading);
+    categoryHeader.appendChild(headerLeft);
+    categoryHeader.appendChild(clickHint);
+    
+    const collapsibleContent = document.createElement('div');
+    collapsibleContent.className = 'collapsible-content-expense';
+    collapsibleContent.style.maxHeight = '0';
+    collapsibleContent.style.overflow = 'hidden';
+    collapsibleContent.style.transition = 'max-height 0.4s ease';
+    collapsibleContent.style.paddingTop = '0';
+    
+    let isExpanded = false;
+    
+    categoryHeader.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        collapsibleContent.style.maxHeight = '3000px';
+        collapsibleContent.style.paddingTop = '12px';
+        toggleIcon.style.transform = 'rotate(180deg)';
+        clickHint.textContent = 'Click to collapse';
+        categoryHeader.style.background = 'linear-gradient(135deg, #5558e0 0%, #7c4fe5 100%)';
+      } else {
+        collapsibleContent.style.maxHeight = '0';
+        collapsibleContent.style.paddingTop = '0';
+        toggleIcon.style.transform = 'rotate(0deg)';
+        clickHint.textContent = 'Click to expand';
+        categoryHeader.style.background = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+      }
     });
-    categoryDiv.appendChild(categoryHeading);
+    
+    categoryHeader.addEventListener('mouseenter', () => {
+      categoryHeader.style.transform = 'translateY(-2px)';
+      categoryHeader.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.3)';
+    });
+    
+    categoryHeader.addEventListener('mouseleave', () => {
+      categoryHeader.style.transform = 'translateY(0)';
+      categoryHeader.style.boxShadow = 'none';
+    });
+    
+    categoryDiv.appendChild(categoryHeader);
 
     const deleteCategoryButton = document.createElement('button');
     deleteCategoryButton.className = 'dynamic-btn';
     deleteCategoryButton.innerHTML = '🗑️ Delete Category';
+    deleteCategoryButton.style.marginBottom = '16px';
     deleteCategoryButton.addEventListener('click', () => {
       deleteAdditionalCost(category);
     });
-    categoryDiv.appendChild(deleteCategoryButton);
+    collapsibleContent.appendChild(deleteCategoryButton);
 
     costs.forEach((cost, costIndex) => {
-      const costInfo = `From ${cost.startMonth}:\nReal: ${cost.realCost}, Buffer: ${cost.bufferCost}\nTotal: ${cost.realCost + cost.bufferCost}`;
-      appendToElement(collapsibleContent, costInfo, 'p', 'dynamic-text');
+      const costCard = document.createElement('div');
+      costCard.className = 'cost-card';
+      costCard.style.background = '#ffffff';
+      costCard.style.padding = '16px';
+      costCard.style.borderRadius = '8px';
+      costCard.style.marginBottom = '12px';
+      costCard.style.border = '1px solid #e5e7eb';
+      
+      const startLabel = document.createElement('div');
+      startLabel.style.marginBottom = '8px';
+      startLabel.innerHTML = `<span style="color: #6b7280; font-size: 13px; font-weight: 600;">START MONTH:</span> <span style="color: #1f2937; font-size: 14px;">${cost.startMonth}</span>`;
+      
+      const costsGrid = document.createElement('div');
+      costsGrid.style.display = 'grid';
+      costsGrid.style.gridTemplateColumns = '1fr 1fr';
+      costsGrid.style.gap = '12px';
+      costsGrid.style.marginBottom = '12px';
+      
+      const realCostDiv = document.createElement('div');
+      realCostDiv.innerHTML = `<div style="color: #6b7280; font-size: 12px; margin-bottom: 4px;">Real Amount</div><div style="color: #0891b2; font-size: 16px; font-weight: 700;">${cost.realCost.toFixed(2)} €</div>`;
+      
+      const bufferCostDiv = document.createElement('div');
+      bufferCostDiv.innerHTML = `<div style="color: #6b7280; font-size: 12px; margin-bottom: 4px;">Buffer Amount</div><div style="color: #6366f1; font-size: 16px; font-weight: 700;">${cost.bufferCost.toFixed(2)} €</div>`;
+      
+      costsGrid.appendChild(realCostDiv);
+      costsGrid.appendChild(bufferCostDiv);
+      
+      const totalDiv = document.createElement('div');
+      totalDiv.style.borderTop = '2px solid #e5e7eb';
+      totalDiv.style.paddingTop = '12px';
+      totalDiv.innerHTML = `<div style="color: #6b7280; font-size: 12px; margin-bottom: 4px;">Total Monthly</div><div style="color: #1f2937; font-size: 18px; font-weight: 700;">${(cost.realCost + cost.bufferCost).toFixed(2)} €</div>`;
+
+      costCard.appendChild(startLabel);
+      costCard.appendChild(costsGrid);
+      costCard.appendChild(totalDiv);
 
       const deleteButton = document.createElement('button');
       deleteButton.className = 'dynamic-btn';
       deleteButton.innerHTML = '🗑️ Delete Cost Segment';
+      deleteButton.style.marginTop = '12px';
       deleteButton.addEventListener('click', () => {
         deleteIndividualCost(category, costIndex);
       });
-      collapsibleContent.appendChild(deleteButton);
+      costCard.appendChild(deleteButton);
+      
+      collapsibleContent.appendChild(costCard);
     });
 
     categoryDiv.appendChild(collapsibleContent);
@@ -246,25 +413,124 @@ function updateAdditionalCostList() {
 
 
 function updateBillingList() {
-  updateList(
-      billingList,
-      listOfRegisteredBilling,
-      (bill, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${bill.category}: Pending payments of ${bill.pendingPayments} from ${bill.start} to ${bill.end}`;
+  billingList.innerHTML = '';
+  
+  if (listOfRegisteredBilling.length === 0) {
+    return;
+  }
+  
+  // Create a grid container for billing
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'billing-grid';
+  gridContainer.style.display = 'grid';
+  gridContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+  gridContainer.style.gap = '16px';
+  gridContainer.style.marginTop = '16px';
+  
+  listOfRegisteredBilling.forEach((bill, index) => {
+    const billingCard = document.createElement('div');
+    billingCard.className = 'billing-input-card';
+    billingCard.style.background = '#ffffff';
+    billingCard.style.padding = '16px';
+    billingCard.style.borderRadius = '12px';
+    billingCard.style.border = '2px solid #e5e7eb';
+    billingCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+    billingCard.style.transition = 'all 0.3s ease';
+    
+    // Top row: Category and Period side by side
+    const topRow = document.createElement('div');
+    topRow.style.display = 'grid';
+    topRow.style.gridTemplateColumns = '1fr 1fr';
+    topRow.style.gap = '16px';
+    topRow.style.marginBottom = '12px';
+    topRow.style.paddingBottom = '12px';
+    topRow.style.borderBottom = '1px solid #e5e7eb';
+    
+    const categoryDiv = document.createElement('div');
+    categoryDiv.innerHTML = `<div style="color: #6b7280; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Type</div><div style="color: #5568d3; font-size: 15px; font-weight: 700;">${bill.category}</div>`;
+    
+    const periodDiv = document.createElement('div');
+    periodDiv.innerHTML = `<div style="color: #6b7280; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Period</div><div style="color: #1f2937; font-size: 13px; font-weight: 600;">${bill.start} - ${bill.end}</div>`;
+    
+    topRow.appendChild(categoryDiv);
+    topRow.appendChild(periodDiv);
+    
+    // Amount row: Compact badge
+    // Treat 0 as positive/neutral (like in the results output)
+    const isRefund = bill.pendingPayments < 0;
+    const isZero = bill.pendingPayments === 0;
+    const isPayment = bill.pendingPayments > 0;
+    
+    let amountColor, amountBg, amountLabel, amountIcon;
+    
+    if (isZero) {
+      // Zero is positive/neutral - use cyan/green
+      amountColor = '#14b8a6';
+      amountBg = 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)';
+      amountLabel = 'Balanced';
+      amountIcon = '✓';
+    } else if (isRefund) {
+      // Negative (refund to tenants)
+      amountColor = '#14b8a6';
+      amountBg = 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)';
+      amountLabel = 'Refund';
+      amountIcon = '↓';
+    } else {
+      // Positive (payment needed)
+      amountColor = '#d97706';
+      amountBg = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+      amountLabel = 'Payment';
+      amountIcon = '↑';
+    }
+    
+    const amountRow = document.createElement('div');
+    amountRow.style.display = 'flex';
+    amountRow.style.justifyContent = 'space-between';
+    amountRow.style.alignItems = 'center';
+    amountRow.style.marginBottom = '12px';
+    
+    const amountBadge = document.createElement('div');
+    amountBadge.style.background = amountBg;
+    amountBadge.style.padding = '8px 14px';
+    amountBadge.style.borderRadius = '8px';
+    amountBadge.style.flex = '1';
+    amountBadge.innerHTML = `<div style="color: rgba(255,255,255,0.85); font-size: 10px; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">${amountLabel}</div><div style="color: white; font-size: 18px; font-weight: 700;">${amountIcon} ${Math.abs(bill.pendingPayments).toFixed(2)} €</div>`;
+    
+    amountRow.appendChild(amountBadge);
+    
+    billingCard.appendChild(topRow);
+    billingCard.appendChild(amountRow);
 
-        const deleteButton = document.createElement('button');
-        deleteButton.classList.add('dynamic-btn');
-        deleteButton.innerHTML = '🗑️ Delete Billing';
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('dynamic-btn');
+    deleteButton.innerHTML = '🗑️ Delete';
+    deleteButton.style.width = '100%';
+    deleteButton.style.padding = '8px';
+    deleteButton.style.fontSize = '11px';
 
-        deleteButton.addEventListener('click', () => {
-          deleteBilling(index);
-        });
+    deleteButton.addEventListener('click', () => {
+      deleteBilling(index);
+    });
 
-        li.appendChild(deleteButton);
-        return li;
-      }
-  );
+    billingCard.appendChild(deleteButton);
+    
+    // Add hover effect
+    billingCard.addEventListener('mouseenter', () => {
+      billingCard.style.transform = 'translateY(-4px)';
+      billingCard.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
+      billingCard.style.borderColor = '#5568d3';
+    });
+    
+    billingCard.addEventListener('mouseleave', () => {
+      billingCard.style.transform = 'translateY(0)';
+      billingCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+      billingCard.style.borderColor = '#e5e7eb';
+    });
+    
+    gridContainer.appendChild(billingCard);
+  });
+  
+  billingList.appendChild(gridContainer);
   saveDataToLocalStorage();
 }
 

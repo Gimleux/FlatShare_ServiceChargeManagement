@@ -21,47 +21,86 @@
 </header>
 <div id="app">
   <section>
-    <h2>Tenant Management</h2>
+    <h2>👥 Tenant Management</h2>
     <form id="tenantForm">
-      <input type="text" id="tenantName" placeholder="Tenant Name" required>
-      <input type="month" id="dateMoveIn" required>
-      <input type="month" id="dateMoveOut">
-      <button type="submit">Add Tenant</button>
+      <div class="form-group">
+        <label for="tenantName">Tenant Name</label>
+        <input type="text" id="tenantName" placeholder="Enter tenant name" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="dateMoveIn">Move In</label>
+          <input type="month" id="dateMoveIn" required>
+        </div>
+        <div class="form-group">
+          <label for="dateMoveOut">Move Out (optional)</label>
+          <input type="month" id="dateMoveOut">
+        </div>
+      </div>
+      <button type="submit">➕ Add Tenant</button>
     </form>
-    <ul id="tenantList"></ul>
+    <ul id="tenantList" class="item-list"></ul>
   </section>
   <section>
-    <h2>Expense Management</h2>
+    <h2>💰 Expense Management</h2>
     <form id="additionalCostForm">
-      <input type="text" id="expenseCategory" placeholder="Expense Type" required>
-      <input type="text" id="realAmount" placeholder="Real Amount" required>
-      <input type="text" id="bufferAmount" placeholder="Buffer Amount" required>
-      <input type="month" id="startMonth" required>
-      <button type="submit">Add Expense</button>
+      <div class="form-group">
+        <label for="expenseCategory">Expense Type</label>
+        <input type="text" id="expenseCategory" placeholder="e.g., Electricity, Water" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="realAmount">Real Amount (€)</label>
+          <input type="text" id="realAmount" placeholder="0.00" required>
+        </div>
+        <div class="form-group">
+          <label for="bufferAmount">Buffer Amount (€)</label>
+          <input type="text" id="bufferAmount" placeholder="0.00" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="startMonth">Start Month</label>
+        <input type="month" id="startMonth" required>
+      </div>
+      <button type="submit">➕ Add Expense</button>
     </form>
     <div id="additionalCostList"></div>
   </section>
   <section>
-    <h2>Actual Costs and Billing</h2>
+    <h2>📊 Actual Costs and Billing</h2>
     <form id="billingForm">
-      <input type="text" id="billingCategory" placeholder="Expense Type" required>
-      <input type="text" id="pendingAmount" placeholder="Pending Payments" required title="negative means you they have to send you money">
-      <input type="month" id="billingStart" required>
-      <input type="month" id="billingEnd" required>
-      <button type="submit">Add Billing</button>
+      <div class="form-group">
+        <label for="billingCategory">Expense Type</label>
+        <input type="text" id="billingCategory" placeholder="Must match expense type" required>
+      </div>
+      <div class="form-group">
+        <label for="pendingAmount">Pending Payments (€)</label>
+        <input type="text" id="pendingAmount" placeholder="0.00 (negative for refund)" required>
+        <small class="form-hint">Negative value means refund to tenants</small>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="billingStart">Period Start</label>
+          <input type="month" id="billingStart" required>
+        </div>
+        <div class="form-group">
+          <label for="billingEnd">Period End</label>
+          <input type="month" id="billingEnd" required>
+        </div>
+      </div>
+      <button type="submit">➕ Add Billing</button>
     </form>
     <div id="billingList"></div>
   </section>
 </div>
 <div id="result">
-  <h2>Result</h2>
+  <h2>📈 Calculation Results</h2>
   <div id="resultInteractions">
-
-    <button type="button" id="calculateButton">Calculate</button>
+    <button type="button" id="calculateButton">🔄 Calculate</button>
     <div id="save">
-      <input type="file" id="importFile" style="display: none;">
-      <button type="button" id="importButton">Import Data</button>
-      <button type="button" id="exportButton">Export Data</button>
+      <input type="file" id="importFile" style="display: none;" accept=".json">
+      <button type="button" id="importButton">📥 Import</button>
+      <button type="button" id="exportButton">📤 Export</button>
     </div>
   </div>
   <div id="resultDiv"></div>
