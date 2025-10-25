@@ -101,10 +101,35 @@ calculateButton.addEventListener('click', handleCalculateButtonClick);
 // Calculation and display logic
 function handleCalculateButtonClick() {
   resultDiv.innerHTML = '';
-  listOfRegisteredBilling.forEach(bill => {
+  
+  // Sort billing by category to group same categories together
+  const sortedBilling = [...listOfRegisteredBilling].sort((a, b) => {
+    // First sort by category name
+    const categoryCompare = a.category.localeCompare(b.category);
+    if (categoryCompare !== 0) return categoryCompare;
+    // If same category, sort by start date
+    return a.start.localeCompare(b.start);
+  });
+  
+  sortedBilling.forEach(bill => {
     const div = document.createElement('div');
     div.className = 'dynamic-container';
-    div.innerHTML = `<h3 class="dynamic-heading">${bill.category}</h3>`;
+    
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'result-header';
+    
+    const title = document.createElement('h3');
+    title.className = 'dynamic-heading';
+    title.textContent = bill.category;
+    
+    const dateRange = document.createElement('span');
+    dateRange.className = 'date-range';
+    dateRange.textContent = `${bill.start} - ${bill.end}`;
+    
+    headerDiv.appendChild(title);
+    headerDiv.appendChild(dateRange);
+    div.appendChild(headerDiv);
+    
     calculateAndDisplayBilling(bill, div);
     resultDiv.appendChild(div);
   });
@@ -352,13 +377,16 @@ function calculateTenantResults(tenantsBillingInformation) {
 
   Object.entries(tenantsBillingInformation).forEach(([tenant, data]) => {
     const affectedMonths = Object.keys(data.months).length;
-    const ratesText = calculateRatesText(data.rates);
+    const rates = {};
+    Object.entries(data.rates).forEach(([rate, count]) => {
+      rates[rate] = count;
+    });
     const pendingText = calculatePendingText(data.months);
     const totalPendingPaymentsNet = roundToTwoDecimals(data.pendingPaymentsWhole - data.buffer);
 
     tenantResults[tenant] = {
       affectedMonths,
-      ratesText,
+      rates,
       pendingText,
       totalPendingPaymentsNet
     };
@@ -386,19 +414,135 @@ function calculatePendingText(months) {
 }
 
 function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults) {
-  appendToElement(div, `Advance expense payments: ${sumOfAdvanceExpensePayments}`);
-  appendToElement(div, `Buffer payments: ${sumOfBufferPayments}`);
-  appendToElement(div, `Pending payments per month: ${roundToTwoDecimals(pendingPaymentsPerMonth)}`);
-  appendToElement(div, `Tenants:`);
+  // Summary Section
+  const summaryDiv = document.createElement('div');
+  summaryDiv.className = 'summary-section';
+  
+  const summaryGrid = document.createElement('div');
+  summaryGrid.className = 'summary-grid';
+  
+  const advanceBox = createSummaryBox('💰 Advance Payments', `${roundToTwoDecimals(sumOfAdvanceExpensePayments)} €`, 'summary-box-blue');
+  const bufferBox = createSummaryBox('🔒 Buffer Payments', `${roundToTwoDecimals(sumOfBufferPayments)} €`, 'summary-box-green');
+  const monthlyBox = createSummaryBox('📅 Per Month', `${roundToTwoDecimals(pendingPaymentsPerMonth)} €`, 'summary-box-purple');
+  
+  summaryGrid.appendChild(advanceBox);
+  summaryGrid.appendChild(bufferBox);
+  summaryGrid.appendChild(monthlyBox);
+  summaryDiv.appendChild(summaryGrid);
+  div.appendChild(summaryDiv);
 
-  Object.entries(tenantResults).forEach(([tenant, data]) => {
-    appendToElement(div, `${tenant}:`, 'h4');
-    appendToElement(div, `Affected months: ${data.affectedMonths}`);
-    appendToElement(div, data.ratesText);
-    appendToElement(div, "Pending payments per Month: ");
-    appendToElement(div, data.pendingText);
-    appendToElement(div, `Total pending payments net: ${data.totalPendingPaymentsNet}`, 'strong');
+  // Tenants Section
+  const tenantsHeading = document.createElement('h3');
+  tenantsHeading.className = 'tenants-heading';
+  tenantsHeading.textContent = '👥 Tenant Overview';
+  div.appendChild(tenantsHeading);
+
+  const tenantsContainer = document.createElement('div');
+  tenantsContainer.className = 'tenants-container';
+
+  // Sort tenants: affected first, then unaffected
+  const sortedTenants = Object.entries(tenantResults).sort(([, a], [, b]) => {
+    if (a.affectedMonths === 0 && b.affectedMonths === 0) return 0;
+    if (a.affectedMonths === 0) return 1;
+    if (b.affectedMonths === 0) return -1;
+    return 0;
   });
+
+  sortedTenants.forEach(([tenant, data]) => {
+    const tenantCard = document.createElement('div');
+    tenantCard.className = 'tenant-card';
+    
+    const tenantHeader = document.createElement('div');
+    tenantHeader.className = 'tenant-header';
+    const tenantName = document.createElement('h4');
+    tenantName.textContent = tenant;
+    tenantHeader.appendChild(tenantName);
+    
+    const totalBadge = document.createElement('div');
+    totalBadge.className = data.totalPendingPaymentsNet >= 0 ? 'total-badge positive' : 'total-badge negative';
+    totalBadge.textContent = `${data.totalPendingPaymentsNet >= 0 ? '+' : ''}${data.totalPendingPaymentsNet} €`;
+    tenantHeader.appendChild(totalBadge);
+    
+    tenantCard.appendChild(tenantHeader);
+    
+    const tenantDetails = document.createElement('div');
+    tenantDetails.className = 'tenant-details';
+    
+    const monthsInfo = document.createElement('div');
+    monthsInfo.className = 'info-row';
+    monthsInfo.innerHTML = `<span class="info-label">📆 Affected Months:</span> <span class="info-value">${data.affectedMonths}</span>`;
+    tenantDetails.appendChild(monthsInfo);
+    
+    if (Object.keys(data.rates).length > 0) {
+      const ratesInfo = document.createElement('div');
+      ratesInfo.className = 'info-row';
+      ratesInfo.innerHTML = `<span class="info-label">📊 Rates:</span>`;
+      const ratesList = document.createElement('ul');
+      ratesList.className = 'rates-list';
+      Object.entries(data.rates).forEach(([rate, count]) => {
+        const rateItem = document.createElement('li');
+        rateItem.textContent = `${count} month(s) with ${rate} €`;
+        ratesList.appendChild(rateItem);
+      });
+      ratesInfo.appendChild(ratesList);
+      tenantDetails.appendChild(ratesInfo);
+    }
+    
+    if (data.pendingText) {
+      const pendingSection = document.createElement('div');
+      pendingSection.className = 'pending-section';
+      
+      const pendingHeader = document.createElement('div');
+      pendingHeader.className = 'pending-header';
+      pendingHeader.textContent = '💳 Pending Payments per Month';
+      pendingHeader.style.cursor = 'pointer';
+      
+      const pendingContent = document.createElement('div');
+      pendingContent.className = 'pending-content';
+      
+      const pendingList = document.createElement('ul');
+      pendingList.className = 'pending-list';
+      const pendingEntries = data.pendingText.split(', ').filter(entry => entry.trim());
+      pendingEntries.forEach(entry => {
+        const pendingItem = document.createElement('li');
+        pendingItem.textContent = entry;
+        pendingList.appendChild(pendingItem);
+      });
+      pendingContent.appendChild(pendingList);
+      
+      pendingHeader.addEventListener('click', () => {
+        pendingContent.classList.toggle('show');
+        pendingHeader.classList.toggle('expanded');
+      });
+      
+      pendingSection.appendChild(pendingHeader);
+      pendingSection.appendChild(pendingContent);
+      tenantDetails.appendChild(pendingSection);
+    }
+    
+    tenantCard.appendChild(tenantDetails);
+    tenantsContainer.appendChild(tenantCard);
+  });
+
+  div.appendChild(tenantsContainer);
+}
+
+function createSummaryBox(label, value, className) {
+  const box = document.createElement('div');
+  box.className = `summary-box ${className}`;
+  
+  const labelEl = document.createElement('div');
+  labelEl.className = 'summary-label';
+  labelEl.textContent = label;
+  
+  const valueEl = document.createElement('div');
+  valueEl.className = 'summary-value';
+  valueEl.textContent = value;
+  
+  box.appendChild(labelEl);
+  box.appendChild(valueEl);
+  
+  return box;
 }
 
 // local storage
