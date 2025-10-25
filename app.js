@@ -507,5 +507,5 @@ function parseDecimalInput(input) {
 }
 
 function stringIsNumber(string) {
-  return /^[0-9.,]+$/.test(string);;
+  return /^-?[0-9.,]+$/.test(string);
 }
