@@ -99,6 +99,10 @@ billingForm.addEventListener('submit', (event) => handleFormSubmit(event, () => 
 calculateButton.addEventListener('click', handleCalculateButtonClick);
 
 // Calculation and display logic
+let currentViewMode = 'category'; // 'category' or 'tenant'
+let cachedCalculatedBillings = [];
+let cachedTotals = {};
+
 function handleCalculateButtonClick() {
   resultDiv.innerHTML = '';
   
@@ -147,13 +151,123 @@ function handleCalculateButtonClick() {
     });
   });
   
+  // Cache the calculated data
+  cachedCalculatedBillings = calculatedBillings;
+  cachedTotals = {
+    totalAdvancePayments,
+    totalBufferPayments,
+    totalPendingPayments,
+    allTenantResults
+  };
+  
   // Create general overview ONCE at the top
   if (calculatedBillings.length > 0) {
     createGeneralOverview(resultDiv, totalAdvancePayments, totalBufferPayments, totalPendingPayments, allTenantResults);
+    
+    // Add view toggle buttons
+    createViewToggle(resultDiv);
   }
   
+  // Display results based on current view mode
+  displayResultsView();
+}
+
+function createViewToggle(container) {
+  const toggleContainer = document.createElement('div');
+  toggleContainer.className = 'view-toggle-container';
+  toggleContainer.style.display = 'flex';
+  toggleContainer.style.justifyContent = 'center';
+  toggleContainer.style.gap = '12px';
+  toggleContainer.style.marginBottom = '24px';
+  toggleContainer.style.padding = '16px';
+  toggleContainer.style.background = 'linear-gradient(135deg, #f9fafb 0%, #e5e7eb 100%)';
+  toggleContainer.style.borderRadius = '12px';
+  toggleContainer.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+  toggleContainer.style.width = '100%';
+  toggleContainer.style.boxSizing = 'border-box';
+  
+  const categoryBtn = document.createElement('button');
+  categoryBtn.textContent = '📊 Group by Category';
+  categoryBtn.className = 'view-toggle-btn';
+  categoryBtn.style.padding = '12px 24px';
+  categoryBtn.style.borderRadius = '8px';
+  categoryBtn.style.border = 'none';
+  categoryBtn.style.cursor = 'pointer';
+  categoryBtn.style.fontSize = '14px';
+  categoryBtn.style.fontWeight = '600';
+  categoryBtn.style.transition = 'all 0.3s ease';
+  categoryBtn.style.minWidth = '180px';
+  
+  const tenantBtn = document.createElement('button');
+  tenantBtn.textContent = '👥 Group by Tenant';
+  tenantBtn.className = 'view-toggle-btn';
+  tenantBtn.style.padding = '12px 24px';
+  tenantBtn.style.borderRadius = '8px';
+  tenantBtn.style.border = 'none';
+  tenantBtn.style.cursor = 'pointer';
+  tenantBtn.style.fontSize = '14px';
+  tenantBtn.style.fontWeight = '600';
+  tenantBtn.style.transition = 'all 0.3s ease';
+  tenantBtn.style.minWidth = '180px';
+  
+  const updateButtonStyles = () => {
+    if (currentViewMode === 'category') {
+      categoryBtn.style.background = 'linear-gradient(135deg, #5568d3 0%, #6a3d99 100%)';
+      categoryBtn.style.color = 'white';
+      categoryBtn.style.boxShadow = '0 4px 12px rgba(85, 104, 211, 0.4)';
+      categoryBtn.style.transform = 'translateY(-2px)';
+      
+      tenantBtn.style.background = 'white';
+      tenantBtn.style.color = '#6b7280';
+      tenantBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      tenantBtn.style.transform = 'translateY(0)';
+    } else {
+      tenantBtn.style.background = 'linear-gradient(135deg, #5568d3 0%, #6a3d99 100%)';
+      tenantBtn.style.color = 'white';
+      tenantBtn.style.boxShadow = '0 4px 12px rgba(85, 104, 211, 0.4)';
+      tenantBtn.style.transform = 'translateY(-2px)';
+      
+      categoryBtn.style.background = 'white';
+      categoryBtn.style.color = '#6b7280';
+      categoryBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+      categoryBtn.style.transform = 'translateY(0)';
+    }
+  };
+  
+  categoryBtn.addEventListener('click', () => {
+    currentViewMode = 'category';
+    updateButtonStyles();
+    displayResultsView();
+  });
+  
+  tenantBtn.addEventListener('click', () => {
+    currentViewMode = 'tenant';
+    updateButtonStyles();
+    displayResultsView();
+  });
+  
+  updateButtonStyles();
+  
+  toggleContainer.appendChild(categoryBtn);
+  toggleContainer.appendChild(tenantBtn);
+  container.appendChild(toggleContainer);
+}
+
+function displayResultsView() {
+  // Remove existing results (keep overview and toggle)
+  const existingResults = resultDiv.querySelectorAll('.dynamic-container, .tenant-view-container');
+  existingResults.forEach(el => el.remove());
+  
+  if (currentViewMode === 'category') {
+    displayCategoryView();
+  } else {
+    displayTenantView();
+  }
+}
+
+function displayCategoryView() {
   // Sort billing by category to group same categories together
-  const sortedBilling = calculatedBillings.sort((a, b) => {
+  const sortedBilling = cachedCalculatedBillings.sort((a, b) => {
     // First sort by category name
     const categoryCompare = a.bill.category.localeCompare(b.bill.category);
     if (categoryCompare !== 0) return categoryCompare;
@@ -161,7 +275,7 @@ function handleCalculateButtonClick() {
     return a.bill.start.localeCompare(b.bill.start);
   });
   
-  // Second pass: display results for each billing
+  // Display results for each billing
   sortedBilling.forEach(({ bill, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults }) => {
     const div = document.createElement('div');
     div.className = 'dynamic-container';
@@ -184,6 +298,263 @@ function handleCalculateButtonClick() {
     displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, bill.pendingPayments, pendingPaymentsPerMonth, tenantResults);
     resultDiv.appendChild(div);
   });
+}
+
+function displayTenantView() {
+  const tenantViewContainer = document.createElement('div');
+  tenantViewContainer.className = 'tenant-view-container';
+  
+  // Collect all tenant data across all categories
+  const tenantData = {};
+  
+  cachedCalculatedBillings.forEach(({ bill, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults }) => {
+    Object.entries(tenantResults).forEach(([tenantName, data]) => {
+      if (!tenantData[tenantName]) {
+        tenantData[tenantName] = {
+          categories: [],
+          totalPayment: 0,
+          totalRefund: 0,
+          totalNet: 0,
+          totalMonths: 0
+        };
+      }
+      
+      tenantData[tenantName].categories.push({
+        category: bill.category,
+        period: `${bill.start} - ${bill.end}`,
+        amount: data.totalPendingPaymentsNet,
+        months: data.affectedMonths,
+        rates: data.rates,
+        pendingText: data.pendingText
+      });
+      
+      if (data.totalPendingPaymentsNet > 0) {
+        tenantData[tenantName].totalPayment += data.totalPendingPaymentsNet;
+      } else {
+        tenantData[tenantName].totalRefund += Math.abs(data.totalPendingPaymentsNet);
+      }
+      
+      tenantData[tenantName].totalNet += data.totalPendingPaymentsNet;
+      tenantData[tenantName].totalMonths += data.affectedMonths;
+    });
+  });
+  
+  // Sort tenants by total net amount (highest payment first)
+  const sortedTenants = Object.entries(tenantData).sort(([, a], [, b]) => b.totalNet - a.totalNet);
+  
+  sortedTenants.forEach(([tenantName, data]) => {
+    const tenantCard = document.createElement('div');
+    tenantCard.className = 'dynamic-container tenant-summary-card';
+    tenantCard.style.marginBottom = '24px';
+    
+    // Tenant Header
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'tenant-summary-header';
+    headerDiv.style.background = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+    headerDiv.style.padding = '20px 24px';
+    headerDiv.style.borderRadius = '12px 12px 0 0';
+    headerDiv.style.color = 'white';
+    headerDiv.style.display = 'flex';
+    headerDiv.style.justifyContent = 'space-between';
+    headerDiv.style.alignItems = 'center';
+    
+    const nameSection = document.createElement('div');
+    const nameTitle = document.createElement('h3');
+    nameTitle.textContent = `👤 ${tenantName}`;
+    nameTitle.style.margin = '0 0 8px 0';
+    nameTitle.style.fontSize = '22px';
+    nameTitle.style.fontWeight = '700';
+    
+    const monthsInfo = document.createElement('div');
+    monthsInfo.textContent = `${data.totalMonths} affected month${data.totalMonths !== 1 ? 's' : ''} across ${data.categories.length} categor${data.categories.length !== 1 ? 'ies' : 'y'}`;
+    monthsInfo.style.fontSize = '13px';
+    monthsInfo.style.opacity = '0.9';
+    
+    nameSection.appendChild(nameTitle);
+    nameSection.appendChild(monthsInfo);
+    
+    const totalBadge = document.createElement('div');
+    totalBadge.style.background = data.totalNet >= 0 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)';
+    totalBadge.style.padding = '12px 20px';
+    totalBadge.style.borderRadius = '10px';
+    totalBadge.style.textAlign = 'center';
+    totalBadge.style.minWidth = '120px';
+    
+    const badgeLabel = document.createElement('div');
+    badgeLabel.textContent = data.totalNet >= 0 ? 'Total Payment' : 'Total Refund';
+    badgeLabel.style.fontSize = '11px';
+    badgeLabel.style.textTransform = 'uppercase';
+    badgeLabel.style.fontWeight = '600';
+    badgeLabel.style.opacity = '0.9';
+    badgeLabel.style.marginBottom = '4px';
+    
+    const badgeValue = document.createElement('div');
+    badgeValue.textContent = `${data.totalNet >= 0 ? '↑' : '↓'} ${Math.abs(data.totalNet).toFixed(2)} €`;
+    badgeValue.style.fontSize = '20px';
+    badgeValue.style.fontWeight = '700';
+    
+    totalBadge.appendChild(badgeLabel);
+    totalBadge.appendChild(badgeValue);
+    
+    headerDiv.appendChild(nameSection);
+    headerDiv.appendChild(totalBadge);
+    tenantCard.appendChild(headerDiv);
+    
+    // Categories Section
+    const categoriesSection = document.createElement('div');
+    categoriesSection.style.padding = '20px';
+    categoriesSection.style.background = '#ffffff';
+    categoriesSection.style.borderRadius = '0 0 12px 12px';
+    
+    data.categories.forEach((cat, index) => {
+      const catCard = document.createElement('div');
+      catCard.style.background = 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)';
+      catCard.style.padding = '16px';
+      catCard.style.borderRadius = '10px';
+      catCard.style.marginBottom = index < data.categories.length - 1 ? '12px' : '0';
+      catCard.style.border = '2px solid #e5e7eb';
+      catCard.style.transition = 'all 0.3s ease';
+      
+      catCard.addEventListener('mouseenter', () => {
+        catCard.style.borderColor = '#5568d3';
+        catCard.style.transform = 'translateX(4px)';
+        catCard.style.boxShadow = '0 4px 12px rgba(85, 104, 211, 0.15)';
+      });
+      
+      catCard.addEventListener('mouseleave', () => {
+        catCard.style.borderColor = '#e5e7eb';
+        catCard.style.transform = 'translateX(0)';
+        catCard.style.boxShadow = 'none';
+      });
+      
+      // Category header
+      const catHeader = document.createElement('div');
+      catHeader.style.display = 'flex';
+      catHeader.style.justifyContent = 'space-between';
+      catHeader.style.alignItems = 'center';
+      catHeader.style.marginBottom = '12px';
+      catHeader.style.paddingBottom = '12px';
+      catHeader.style.borderBottom = '1px solid #e5e7eb';
+      
+      const catTitle = document.createElement('div');
+      const catName = document.createElement('div');
+      catName.textContent = cat.category;
+      catName.style.fontSize = '16px';
+      catName.style.fontWeight = '700';
+      catName.style.color = '#1f2937';
+      catName.style.marginBottom = '4px';
+      
+      const catPeriod = document.createElement('div');
+      catPeriod.textContent = cat.period;
+      catPeriod.style.fontSize = '12px';
+      catPeriod.style.color = '#6b7280';
+      
+      catTitle.appendChild(catName);
+      catTitle.appendChild(catPeriod);
+      
+      const amountBadge = document.createElement('div');
+      amountBadge.style.background = cat.amount >= 0 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)';
+      amountBadge.style.color = 'white';
+      amountBadge.style.padding = '8px 16px';
+      amountBadge.style.borderRadius = '8px';
+      amountBadge.style.fontSize = '16px';
+      amountBadge.style.fontWeight = '700';
+      amountBadge.textContent = `${cat.amount >= 0 ? '+' : ''}${cat.amount.toFixed(2)} €`;
+      
+      catHeader.appendChild(catTitle);
+      catHeader.appendChild(amountBadge);
+      catCard.appendChild(catHeader);
+      
+      // Details grid
+      const detailsGrid = document.createElement('div');
+      detailsGrid.style.display = 'grid';
+      detailsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+      detailsGrid.style.gap = '12px';
+      
+      // Months detail
+      const monthsDetail = document.createElement('div');
+      monthsDetail.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">📆 Affected Months</div><div style="color: #1f2937; font-size: 14px; font-weight: 600;">${cat.months} month${cat.months !== 1 ? 's' : ''}</div>`;
+      detailsGrid.appendChild(monthsDetail);
+      
+      // Rates detail
+      if (Object.keys(cat.rates).length > 0) {
+        const ratesDetail = document.createElement('div');
+        const ratesLabel = document.createElement('div');
+        ratesLabel.textContent = '📊 Rates';
+        ratesLabel.style.color = '#6b7280';
+        ratesLabel.style.fontSize = '11px';
+        ratesLabel.style.fontWeight = '600';
+        ratesLabel.style.textTransform = 'uppercase';
+        ratesLabel.style.marginBottom = '4px';
+        
+        const ratesList = document.createElement('div');
+        ratesList.style.color = '#1f2937';
+        ratesList.style.fontSize = '13px';
+        Object.entries(cat.rates).forEach(([rate, count]) => {
+          const rateItem = document.createElement('div');
+          rateItem.textContent = `${count}× ${rate} €`;
+          rateItem.style.marginBottom = '2px';
+          ratesList.appendChild(rateItem);
+        });
+        
+        ratesDetail.appendChild(ratesLabel);
+        ratesDetail.appendChild(ratesList);
+        detailsGrid.appendChild(ratesDetail);
+      }
+      
+      catCard.appendChild(detailsGrid);
+      
+      // Pending details (collapsible)
+      if (cat.pendingText) {
+        const pendingSection = document.createElement('div');
+        pendingSection.style.marginTop = '12px';
+        pendingSection.style.paddingTop = '12px';
+        pendingSection.style.borderTop = '1px solid #e5e7eb';
+        
+        const pendingHeader = document.createElement('div');
+        pendingHeader.textContent = '💳 Monthly Breakdown';
+        pendingHeader.style.fontSize = '12px';
+        pendingHeader.style.fontWeight = '600';
+        pendingHeader.style.color = '#5568d3';
+        pendingHeader.style.cursor = 'pointer';
+        pendingHeader.style.marginBottom = '8px';
+        pendingHeader.style.display = 'inline-block';
+        
+        const pendingContent = document.createElement('div');
+        pendingContent.style.maxHeight = '0';
+        pendingContent.style.overflow = 'hidden';
+        pendingContent.style.transition = 'max-height 0.3s ease';
+        pendingContent.style.fontSize = '12px';
+        pendingContent.style.color = '#6b7280';
+        
+        const pendingList = cat.pendingText.split(', ').filter(entry => entry.trim());
+        pendingList.forEach(entry => {
+          const item = document.createElement('div');
+          item.textContent = `• ${entry}`;
+          item.style.marginBottom = '4px';
+          pendingContent.appendChild(item);
+        });
+        
+        let isExpanded = false;
+        pendingHeader.addEventListener('click', () => {
+          isExpanded = !isExpanded;
+          pendingContent.style.maxHeight = isExpanded ? '500px' : '0';
+          pendingHeader.textContent = isExpanded ? '💳 Monthly Breakdown ▼' : '💳 Monthly Breakdown ▶';
+        });
+        
+        pendingSection.appendChild(pendingHeader);
+        pendingSection.appendChild(pendingContent);
+        catCard.appendChild(pendingSection);
+      }
+      
+      categoriesSection.appendChild(catCard);
+    });
+    
+    tenantCard.appendChild(categoriesSection);
+    tenantViewContainer.appendChild(tenantCard);
+  });
+  
+  resultDiv.appendChild(tenantViewContainer);
 }
 
 // Create general overview section
