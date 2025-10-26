@@ -357,20 +357,40 @@ function displayTenantView() {
     headerDiv.style.display = 'flex';
     headerDiv.style.justifyContent = 'space-between';
     headerDiv.style.alignItems = 'center';
+    headerDiv.style.cursor = 'pointer';
+    headerDiv.style.userSelect = 'none';
+    headerDiv.style.transition = 'all 0.3s ease';
     
     const nameSection = document.createElement('div');
+    nameSection.style.flex = '1';
+    
+    const nameTitleWrapper = document.createElement('div');
+    nameTitleWrapper.style.display = 'flex';
+    nameTitleWrapper.style.alignItems = 'center';
+    nameTitleWrapper.style.gap = '12px';
+    
+    const toggleIcon = document.createElement('span');
+    toggleIcon.textContent = '▼';
+    toggleIcon.style.fontSize = '16px';
+    toggleIcon.style.fontWeight = 'bold';
+    toggleIcon.style.transition = 'transform 0.3s ease';
+    
     const nameTitle = document.createElement('h3');
     nameTitle.textContent = `👤 ${tenantName}`;
-    nameTitle.style.margin = '0 0 8px 0';
+    nameTitle.style.margin = '0';
     nameTitle.style.fontSize = '22px';
     nameTitle.style.fontWeight = '700';
+    
+    nameTitleWrapper.appendChild(toggleIcon);
+    nameTitleWrapper.appendChild(nameTitle);
     
     const monthsInfo = document.createElement('div');
     monthsInfo.textContent = `${data.totalMonths} affected month${data.totalMonths !== 1 ? 's' : ''} across ${data.categories.length} categor${data.categories.length !== 1 ? 'ies' : 'y'}`;
     monthsInfo.style.fontSize = '13px';
     monthsInfo.style.opacity = '0.9';
+    monthsInfo.style.marginTop = '8px';
     
-    nameSection.appendChild(nameTitle);
+    nameSection.appendChild(nameTitleWrapper);
     nameSection.appendChild(monthsInfo);
     
     const totalBadge = document.createElement('div');
@@ -398,13 +418,41 @@ function displayTenantView() {
     
     headerDiv.appendChild(nameSection);
     headerDiv.appendChild(totalBadge);
+    
+    // Hover effects for header
+    headerDiv.addEventListener('mouseenter', () => {
+      headerDiv.style.background = 'linear-gradient(135deg, #5558e0 0%, #7c4fe5 100%)';
+    });
+    
+    headerDiv.addEventListener('mouseleave', () => {
+      headerDiv.style.background = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+    });
+    
     tenantCard.appendChild(headerDiv);
     
-    // Categories Section
+    // Categories Section (collapsible)
     const categoriesSection = document.createElement('div');
-    categoriesSection.style.padding = '20px';
+    categoriesSection.style.padding = '0';
     categoriesSection.style.background = '#ffffff';
     categoriesSection.style.borderRadius = '0 0 12px 12px';
+    categoriesSection.style.maxHeight = '0';
+    categoriesSection.style.overflow = 'hidden';
+    categoriesSection.style.transition = 'max-height 0.4s ease, padding 0.4s ease';
+    
+    // Toggle functionality
+    let isExpanded = false;
+    headerDiv.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      if (isExpanded) {
+        categoriesSection.style.maxHeight = '5000px';
+        categoriesSection.style.padding = '20px';
+        toggleIcon.style.transform = 'rotate(180deg)';
+      } else {
+        categoriesSection.style.maxHeight = '0';
+        categoriesSection.style.padding = '0';
+        toggleIcon.style.transform = 'rotate(0deg)';
+      }
+    });
     
     data.categories.forEach((cat, index) => {
       const catCard = document.createElement('div');
