@@ -102,16 +102,67 @@ calculateButton.addEventListener('click', handleCalculateButtonClick);
 function handleCalculateButtonClick() {
   resultDiv.innerHTML = '';
   
-  // Sort billing by category to group same categories together
-  const sortedBilling = [...listOfRegisteredBilling].sort((a, b) => {
-    // First sort by category name
-    const categoryCompare = a.category.localeCompare(b.category);
-    if (categoryCompare !== 0) return categoryCompare;
-    // If same category, sort by start date
-    return a.start.localeCompare(b.start);
+  // Calculate totals for overview
+  let totalAdvancePayments = 0;
+  let totalBufferPayments = 0;
+  let totalPendingPayments = 0;
+  let allTenantResults = {};
+  
+  // First pass: calculate all values
+  const calculatedBillings = [];
+  
+  listOfRegisteredBilling.forEach(bill => {
+    const billingTotalMonths = calculateTotalMonths(bill.start, bill.end);
+    const sortedExpenseDurations = getSortedExpenseDurations(bill.category);
+    const monthlyDetails = generateMonthlyDetails(bill.start, billingTotalMonths, sortedExpenseDurations);
+    const tenantsBillingInformation = initializeTenantsBillingInformation();
+    
+    updateTenantsBillingInformation(monthlyDetails, tenantsBillingInformation);
+    const { sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth } = calculatePayments(monthlyDetails, tenantsBillingInformation, bill.pendingPayments);
+    const tenantResults = calculateTenantResults(tenantsBillingInformation);
+    
+    // Accumulate totals
+    totalAdvancePayments += sumOfAdvanceExpensePayments;
+    totalBufferPayments += sumOfBufferPayments;
+    totalPendingPayments += bill.pendingPayments;
+    
+    // Merge tenant results
+    Object.keys(tenantResults).forEach(tenantName => {
+      if (!allTenantResults[tenantName]) {
+        allTenantResults[tenantName] = {
+          totalPendingPaymentsNet: 0,
+          affectedMonths: 0
+        };
+      }
+      allTenantResults[tenantName].totalPendingPaymentsNet += tenantResults[tenantName].totalPendingPaymentsNet;
+      allTenantResults[tenantName].affectedMonths += tenantResults[tenantName].affectedMonths;
+    });
+    
+    calculatedBillings.push({
+      bill,
+      sumOfAdvanceExpensePayments,
+      sumOfBufferPayments,
+      pendingPaymentsPerMonth,
+      tenantResults
+    });
   });
   
-  sortedBilling.forEach(bill => {
+  // Create general overview ONCE at the top
+  if (calculatedBillings.length > 0) {
+    createGeneralOverview(resultDiv, totalAdvancePayments, totalBufferPayments, totalPendingPayments, allTenantResults);
+  }
+  
+  // Sort billing by category to group same categories together
+  const sortedBilling = calculatedBillings.sort((a, b) => {
+    // First sort by category name
+    const categoryCompare = a.bill.category.localeCompare(b.bill.category);
+    if (categoryCompare !== 0) return categoryCompare;
+    // If same category, sort by start date
+    return a.bill.start.localeCompare(b.bill.start);
+  });
+  
+  // Second pass: display results for each billing
+  sortedBilling.forEach(({ bill, sumOfAdvanceExpensePayments, sumOfBufferPayments, pendingPaymentsPerMonth, tenantResults }) => {
     const div = document.createElement('div');
     div.className = 'dynamic-container';
     
@@ -130,9 +181,65 @@ function handleCalculateButtonClick() {
     headerDiv.appendChild(dateRange);
     div.appendChild(headerDiv);
     
-    calculateAndDisplayBilling(bill, div);
+    displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, bill.pendingPayments, pendingPaymentsPerMonth, tenantResults);
     resultDiv.appendChild(div);
   });
+}
+
+// Create general overview section
+function createGeneralOverview(container, totalAdvancePayments, totalBufferPayments, totalPendingPayments, allTenantResults) {
+  const totalPaymentRefund = Object.values(allTenantResults).reduce((sum, tenant) => sum + tenant.totalPendingPaymentsNet, 0);
+  const totalTenants = Object.keys(allTenantResults).length;
+  const affectedTenants = Object.values(allTenantResults).filter(t => t.affectedMonths > 0).length;
+  const totalExpenses = totalAdvancePayments + totalBufferPayments;
+  
+  const overviewDiv = document.createElement('div');
+  overviewDiv.className = 'general-overview';
+  overviewDiv.style.background = 'linear-gradient(135deg, #5568d3 0%, #6a3d99 100%)';
+  overviewDiv.style.padding = '24px';
+  overviewDiv.style.borderRadius = '12px';
+  overviewDiv.style.marginBottom = '32px';
+  overviewDiv.style.color = 'white';
+  overviewDiv.style.boxShadow = '0 4px 12px rgba(85, 104, 211, 0.3)';
+  
+  const overviewTitle = document.createElement('h3');
+  overviewTitle.textContent = '📊 Overall Summary';
+  overviewTitle.style.margin = '0 0 20px 0';
+  overviewTitle.style.fontSize = '22px';
+  overviewTitle.style.fontWeight = '700';
+  
+  const overviewGrid = document.createElement('div');
+  overviewGrid.style.display = 'grid';
+  overviewGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))';
+  overviewGrid.style.gap = '16px';
+  
+  const createOverviewItem = (label, value, icon) => {
+    const item = document.createElement('div');
+    item.style.background = 'rgba(255, 255, 255, 0.15)';
+    item.style.padding = '16px';
+    item.style.borderRadius = '10px';
+    item.style.backdropFilter = 'blur(10px)';
+    item.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+    
+    item.innerHTML = `
+      <div style="font-size: 12px; opacity: 0.9; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${icon} ${label}</div>
+      <div style="font-size: 24px; font-weight: 700;">${value}</div>
+    `;
+    return item;
+  };
+  
+  overviewGrid.appendChild(createOverviewItem('Total Expenses', `${roundToTwoDecimals(totalExpenses)} €`, '💰'));
+  overviewGrid.appendChild(createOverviewItem('Advance Payments', `${roundToTwoDecimals(totalAdvancePayments)} €`, '📋'));
+  overviewGrid.appendChild(createOverviewItem('Buffer Payments', `${roundToTwoDecimals(totalBufferPayments)} €`, '🔒'));
+  overviewGrid.appendChild(createOverviewItem('Pending Total', `${roundToTwoDecimals(totalPendingPayments)} €`, '💳'));
+  
+  const netResultLabel = totalPaymentRefund > 0 ? 'Net Payment' : (totalPaymentRefund < 0 ? 'Net Refund' : 'Balanced');
+  const netResultIcon = totalPaymentRefund > 0 ? '↑' : (totalPaymentRefund < 0 ? '↓' : '✓');
+  overviewGrid.appendChild(createOverviewItem(netResultLabel, `${netResultIcon} ${Math.abs(totalPaymentRefund).toFixed(2)} €`, '💸'));
+  
+  overviewDiv.appendChild(overviewTitle);
+  overviewDiv.appendChild(overviewGrid);
+  container.appendChild(overviewDiv);
 }
 
 // Data management functions
@@ -683,13 +790,12 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, t
   // Calculate total payment/refund
   const totalPaymentRefund = Object.values(tenantResults).reduce((sum, tenant) => sum + tenant.totalPendingPaymentsNet, 0);
   
-  // Summary Section
+  // Summary Section (per category)
   const summaryDiv = document.createElement('div');
   summaryDiv.className = 'summary-section';
   
   const summaryGrid = document.createElement('div');
   summaryGrid.className = 'summary-grid';
-  
   const advanceBox = createSummaryBox('💰 Advance Payments', `${roundToTwoDecimals(sumOfAdvanceExpensePayments)} €`, 'summary-box-blue');
   const bufferBox = createSummaryBox('🔒 Buffer Payments', `${roundToTwoDecimals(sumOfBufferPayments)} €`, 'summary-box-teal');
   
