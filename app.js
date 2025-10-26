@@ -1203,6 +1203,10 @@ function displayResults(div, sumOfAdvanceExpensePayments, sumOfBufferPayments, t
   
   const tenantsContainer = document.createElement('div');
   tenantsContainer.className = 'tenants-container collapsible-content';
+  tenantsContainer.style.display = 'grid';
+  tenantsContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(320px, 1fr))';
+  tenantsContainer.style.gap = '16px';
+  tenantsContainer.style.marginTop = '16px';
   
   tenantsHeading.addEventListener('click', () => {
     tenantsContainer.classList.toggle('show');
