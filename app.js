@@ -325,7 +325,9 @@ function displayTenantView() {
         amount: data.totalPendingPaymentsNet,
         months: data.affectedMonths,
         rates: data.rates,
-        pendingText: data.pendingText
+        pendingText: data.pendingText,
+        pendingPayments: data.totalPendingPayments,
+        buffer: data.totalBuffer
       });
       
       if (data.totalPendingPaymentsNet > 0) {
@@ -524,6 +526,22 @@ function displayTenantView() {
       monthsDetail.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">📆 Affected Months</div><div style="color: #1f2937; font-size: 14px; font-weight: 600;">${cat.months} month${cat.months !== 1 ? 's' : ''}</div>`;
       detailsGrid.appendChild(monthsDetail);
       
+      // Pending Payments detail
+      const pendingLabel = cat.pendingPayments > 0 ? 'Billing Amount' : (cat.pendingPayments < 0 ? 'Billing Refund' : 'Balanced');
+      const pendingIcon = cat.pendingPayments > 0 ? '💳' : (cat.pendingPayments < 0 ? '💵' : '✓');
+      const pendingColor = cat.pendingPayments >= 0 ? '#d97706' : '#0891b2';
+      const pendingDetail = document.createElement('div');
+      pendingDetail.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${pendingIcon} ${pendingLabel}</div><div style="color: ${pendingColor}; font-size: 14px; font-weight: 600;">${cat.pendingPayments > 0 ? '+' : ''}${cat.pendingPayments.toFixed(2)} €</div>`;
+      detailsGrid.appendChild(pendingDetail);
+      
+      // Buffer detail
+      const bufferLabel = cat.buffer > 0 ? 'Buffer Deduction' : (cat.buffer < 0 ? 'Buffer Addition' : 'No Buffer');
+      const bufferIcon = '🔒';
+      const bufferColor = cat.buffer >= 0 ? '#0891b2' : '#d97706';
+      const bufferDetail = document.createElement('div');
+      bufferDetail.innerHTML = `<div style="color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">${bufferIcon} ${bufferLabel}</div><div style="color: ${bufferColor}; font-size: 14px; font-weight: 600;">${cat.buffer > 0 ? '-' : (cat.buffer < 0 ? '+' : '')}${Math.abs(cat.buffer).toFixed(2)} €</div>`;
+      detailsGrid.appendChild(bufferDetail);
+      
       // Rates detail
       if (Object.keys(cat.rates).length > 0) {
         const ratesDetail = document.createElement('div');
@@ -551,6 +569,56 @@ function displayTenantView() {
       }
       
       catCard.appendChild(detailsGrid);
+      
+      // Calculation breakdown
+      const calculationBreakdown = document.createElement('div');
+      calculationBreakdown.style.marginTop = '12px';
+      calculationBreakdown.style.padding = '12px';
+      calculationBreakdown.style.background = 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)';
+      calculationBreakdown.style.borderRadius = '8px';
+      calculationBreakdown.style.border = '1px solid #bae6fd';
+      calculationBreakdown.style.fontSize = '13px';
+      calculationBreakdown.style.color = '#0c4a6e';
+      calculationBreakdown.style.fontWeight = '600';
+      
+      const formula = document.createElement('div');
+      formula.style.display = 'flex';
+      formula.style.alignItems = 'center';
+      formula.style.gap = '8px';
+      formula.style.flexWrap = 'wrap';
+      
+      const pendingSpan = document.createElement('span');
+      pendingSpan.textContent = `${cat.pendingPayments > 0 ? '+' : ''}${cat.pendingPayments.toFixed(2)} €`;
+      pendingSpan.style.color = cat.pendingPayments >= 0 ? '#d97706' : '#0891b2';
+      
+      const minusSpan = document.createElement('span');
+      minusSpan.textContent = '−';
+      minusSpan.style.fontSize = '16px';
+      minusSpan.style.color = '#64748b';
+      
+      const bufferSpan = document.createElement('span');
+      bufferSpan.textContent = `${cat.buffer.toFixed(2)} €`;
+      bufferSpan.style.color = cat.buffer >= 0 ? '#0891b2' : '#d97706';
+      
+      const equalsSpan = document.createElement('span');
+      equalsSpan.textContent = '=';
+      equalsSpan.style.fontSize = '16px';
+      equalsSpan.style.color = '#64748b';
+      
+      const resultSpan = document.createElement('span');
+      resultSpan.textContent = `${cat.amount > 0 ? '+' : ''}${cat.amount.toFixed(2)} €`;
+      resultSpan.style.color = cat.amount >= 0 ? '#d97706' : '#0891b2';
+      resultSpan.style.fontWeight = '700';
+      resultSpan.style.fontSize = '15px';
+      
+      formula.appendChild(pendingSpan);
+      formula.appendChild(minusSpan);
+      formula.appendChild(bufferSpan);
+      formula.appendChild(equalsSpan);
+      formula.appendChild(resultSpan);
+      
+      calculationBreakdown.appendChild(formula);
+      catCard.appendChild(calculationBreakdown);
       
       // Pending details (collapsible)
       if (cat.pendingText) {
@@ -1180,7 +1248,9 @@ function calculateTenantResults(tenantsBillingInformation) {
       affectedMonths,
       rates,
       pendingText,
-      totalPendingPaymentsNet
+      totalPendingPaymentsNet,
+      totalPendingPayments: roundToTwoDecimals(data.pendingPaymentsWhole),
+      totalBuffer: roundToTwoDecimals(data.buffer)
     };
   });
 
